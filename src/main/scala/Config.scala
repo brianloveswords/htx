@@ -21,8 +21,3 @@ case class ConfigEntry(
 )
 
 type ExtractorMap = Map[String, Extractor]
-
-case class Extractor(
-    selector: String,
-    fallback: Option[String],
-)
