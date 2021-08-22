@@ -1,5 +1,6 @@
 package mdlink
 
+import cats.implicits.*
 import cats.Eq
 import cats.effect.IO
 import cats.syntax.*
@@ -14,21 +15,25 @@ import scala.util.matching.Regex
 
 enum Matcher:
   case Simple(matcher: String)
-  case List(matcher: Seq[String])
+  case Many(matcher: Seq[String])
   case Regexp(matcher: Regex)
 
 object Matcher:
   given Encoder[Matcher] = Encoder.instance {
-    case Simple(m) => m.asJson
-    case List(m)   => ???
     case Regexp(m) => ???
+    case Simple(m) => m.asJson
+    case Many(m)   => m.asJson
   }
 
   given Decoder[Matcher] = Decoder.instance { cursor =>
-    cursor.as[String].map(Simple.apply)
+    val simple = cursor.as[String].map(Simple.apply)
+    val many = cursor.as[Seq[String]].map(Many.apply)
+    List(simple, many).reduceLeft(_ orElse _)
   }
 
   given Eq[Matcher] = Eq.fromUniversalEquals
   given Arbitrary[Matcher] = Arbitrary {
-    Gen.const(Simple("1"))
+    val simple = Gen.alphaStr map Simple.apply
+    val many = Gen.listOf(Gen.alphaStr) map Many.apply
+    Gen.oneOf(simple, many)
   }
