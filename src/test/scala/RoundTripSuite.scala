@@ -9,12 +9,14 @@ import io.circe.Encoder
 import io.circe.syntax.*
 import io.circe.parser.*
 import io.circe.generic.auto.*
+import cats.implicits.*
+import cats.kernel.Eq
 
-trait RoundTripSuite[T: Arbitrary: Decoder: Encoder]
+trait RoundTripSuite[T: Arbitrary: Decoder: Encoder: Eq]
     extends CatsEffectSuite
     with ScalaCheckEffectSuite:
 
-  def roundtrip: Unit = roundtrip(assertEquals(_, _))
+  def roundtrip: Unit = roundtrip { (a, b) => assert(a === b) }
 
   def roundtrip(f: (T, T) => Unit): Unit =
     test("property: roundtrip") {

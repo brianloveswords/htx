@@ -41,7 +41,11 @@ object Matcher:
     List(simple, many, pattern).reduceLeft(_ orElse _)
   }
 
-  given Eq[Matcher] = Eq.fromUniversalEquals
+  given Eq[Matcher] = Eq.instance {
+    case (Pattern(p1), Pattern(p2)) => p1.toString === p2.toString
+    case (m1, m2)                   => m1 == m2
+  }
+
   given Arbitrary[Matcher] = Arbitrary {
     val simple = Gen.alphaStr map Simple.apply
     val many = Gen.listOf(Gen.alphaStr) map Many.apply

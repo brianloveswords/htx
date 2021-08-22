@@ -9,8 +9,6 @@ import io.circe.syntax.*
 import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
 
-import scala.util.matching.Regex
-
 case class Template(value: String)
 
 object Template:
