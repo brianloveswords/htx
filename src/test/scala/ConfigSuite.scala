@@ -14,5 +14,5 @@ import io.circe.syntax.*
 import io.circe.parser.*
 import io.circe.generic.auto.*
 
-class ConfigTemplateSuite extends RoundTripSuite:
+class ConfigTemplateSuite extends CatsEffectSuite:
   test("cool") { 1 == 1 }

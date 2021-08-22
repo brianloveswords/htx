@@ -10,13 +10,18 @@ import io.circe.syntax.*
 import io.circe.parser.*
 import io.circe.generic.auto.*
 
-trait RoundTripSuite extends CatsEffectSuite with ScalaCheckEffectSuite:
-  def roundtrip[T: Arbitrary: Decoder: Encoder]: Unit =
+trait RoundTripSuite[T: Arbitrary: Decoder: Encoder]
+    extends CatsEffectSuite
+    with ScalaCheckEffectSuite:
+
+  def roundtrip: Unit = roundtrip(assertEquals(_, _))
+
+  def roundtrip(f: (T, T) => Unit): Unit =
     test("property: roundtrip") {
-      Prop.forAll { (t: T) =>
+      Prop.forAllNoShrink { (t: T) =>
         val dt = decode[T](t.asJson.noSpaces)
         dt match
           case Left(e)   => fail(s"something went wrong: $e")
-          case Right(dt) => assertEquals(t, dt)
+          case Right(dt) => f(dt, t)
       }
     }

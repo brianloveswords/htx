@@ -4,7 +4,9 @@ import io.circe.syntax.*
 import io.circe.parser.*
 import io.circe.generic.auto.*
 
-class TemplateSuite extends RoundTripSuite:
+class TemplateSuite extends RoundTripSuite[Template]:
+  roundtrip
+
   test("encode") {
     val template = Template("ok")
     val jsonString = template.asJson.noSpaces
@@ -32,5 +34,3 @@ class TemplateSuite extends RoundTripSuite:
       case Left(e)  => fail(s"something went wrong: $e")
       case Right(t) => assertEquals(t, Inner(Template("ok")))
   }
-
-  roundtrip[Template]
