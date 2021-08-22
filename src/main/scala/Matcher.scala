@@ -16,7 +16,7 @@ enum Matcher:
   case Pattern(m: Regex)
 
 private case class PatternSerializable(
-    pattern: String,
+    `pattern`: String,
     `type`: String = "regex",
 ):
   def toPattern: Matcher = Matcher.Pattern(pattern.r)
