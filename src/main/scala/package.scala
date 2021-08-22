@@ -1,4 +1,4 @@
 /**
  * this gonna work?
  */
-package object main {}
+package object mdlink {}

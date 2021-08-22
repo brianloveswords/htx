@@ -1,0 +1,86 @@
+- match:
+      - medium.com
+      - itnext.io
+      - blog.skyliner.io
+      - towardsdatascience.com
+      - betterprogramming.pub
+      - levelup.gitconnected.com
+  extractors:
+      title:
+          selector: meta[property='twitter:title']
+          attribute: content
+      author:
+          selector: meta[name='author']
+          attribute: content
+          fallback: "Unknown Author"
+  template: "[{title}]({url}) by {author}"
+
+- match: jvns.ca
+  extractors: { title: { selector: "title" } }
+  template: "[{title}]({url}) by Julia Evans"
+
+- match: mcfunley.com
+  extractors: { title: { selector: ".post-heading h4 a" } }
+  template: "[{title}]({url}) by Dan McKinley"
+
+- match: lihaoyi.com
+  extractors: { title: { selector: title } }
+  template: "[{title}]({url}) by Li Haoyi"
+
+- match: css-tricks.com
+  extractors:
+      title:
+          selector: ".article-title"
+          fallback: "heck"
+      author:
+          selector: ".author-name"
+          fallback: "heck"
+  template: "[{title}]({url}) by {author}"
+
+- match: chelseatroy.com
+  extractors:
+      title:
+          selector: meta[property='og:title']
+          attribute: content
+  template: "[{title}]({url}) by Chelsea Troy"
+
+- match: buttondown.email/j2kun
+  extractors: { title: { selector: title } }
+  template: "[{title}]({url}) by Jeremy Kun"
+
+- match: rockthejvm.com
+  extractors:
+      title:
+          selector: meta[property='og:title']
+          attribute: content
+      author:
+          selector: meta[name='author']
+          attribute: content
+  template: "[{title}]({url}) by {author}"
+
+- match: percona.com
+  extractors:
+      title:
+          selector: h1
+      author:
+          selector: meta[name='twitter:data1']
+          attribute: content
+  template: "[{title}]({url}) by {author}"
+
+- match: github.com
+  extractors:
+      name:
+          selector: title
+          pattern: ".*?/(.*?):"
+          template: "{1}"
+      description:
+          selector: title
+          pattern: ".*?: ?(.*)"
+          template: "{1}"
+  template: "[{name}]({url}): {description}"
+
+- match:
+      type: regex
+      pattern: ".*"
+  extractors: { title: { selector: title } }
+  template: "[{title}]({url})"
