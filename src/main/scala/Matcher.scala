@@ -15,15 +15,6 @@ enum Matcher:
   case Many(m: Seq[String])
   case Pattern(m: Regex)
 
-private case class PatternSerializable(
-    `pattern`: String,
-    `type`: String = "regex",
-):
-  def toPattern: Matcher = Matcher.Pattern(pattern.r)
-private object PatternSerializable:
-  def apply(pattern: Matcher.Pattern): PatternSerializable =
-    PatternSerializable(pattern.m.toString)
-
 object Matcher:
   given Encoder[Matcher] = Encoder.instance {
     case p @ Pattern(_) => PatternSerializable(p).asJson
@@ -52,3 +43,12 @@ object Matcher:
     yield Pattern(re)
     Gen.oneOf(simple, many, pattern)
   }
+
+  private case class PatternSerializable(
+      `pattern`: String,
+      `type`: String = "regex",
+  ):
+    def toPattern: Matcher = Matcher.Pattern(pattern.r)
+  private object PatternSerializable:
+    def apply(pattern: Matcher.Pattern): PatternSerializable =
+      PatternSerializable(pattern.m.toString)
