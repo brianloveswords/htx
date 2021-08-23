@@ -7,8 +7,6 @@ import org.scalacheck.Prop
 import org.scalacheck.Gen
 
 class PureSoupSuite extends CommonSuite:
-  val genLowerNonEmpty = Gen.alphaLowerStr.suchThat(_.nonEmpty)
-
   val genHtmlParts: Gen[(String, String, String, String)] = Gen.zip(
     genLowerNonEmpty,
     genLowerNonEmpty,
