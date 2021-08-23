@@ -9,26 +9,36 @@ import org.scalacheck.Gen
 class PureSoupSuite extends CommonSuite:
   val genLowerNonEmpty = Gen.alphaLowerStr.suchThat(_.nonEmpty)
 
-  val genHtmlParts = Gen.zip(
+  val genHtmlParts: Gen[(String, String, String, String)] = Gen.zip(
     genLowerNonEmpty,
     genLowerNonEmpty,
     genLowerNonEmpty,
     genLowerNonEmpty,
   )
 
+  val genHtmlAndMissingTag: Gen[(String, String)] = genHtmlParts flatMap {
+    (tag, attr, value, text) =>
+      for missing <- genLowerNonEmpty.suchThat(_ ne tag)
+      yield (missing, htmlFromParts(tag, attr, value, text))
+  }
+
+  def htmlFromParts(
+      tag: String,
+      attr: String,
+      value: String,
+      text: String,
+  ): String = s"""
+    |<html>
+    |  <body>
+    |    <$tag $attr="$value"><span>$text</span></$tag>
+    |  </body>
+    |</html>
+    """.stripMargin
+
   test("extract: found") {
     Prop.forAll(genHtmlParts) { (tag, attr, value, text) =>
-      val html =
-        PureSoup(
-          s"""
-          |<html>
-          |  <body>
-          |    <$tag $attr="$value"><span>$text</span></$tag>
-          |  </body>
-          |</html>
-          |""".stripMargin,
-        )
-      val result = html.extract(tag)
+      val soup = PureSoup(htmlFromParts(tag, attr, value, text))
+      val result = soup.extract(tag)
       assertEquals(
         result,
         Right(
@@ -41,7 +51,9 @@ class PureSoupSuite extends CommonSuite:
   }
 
   test("extract: not found") {
-    val html = PureSoup("""<a href="https://www.google.com">Google</a>""")
-    val result = html.extract("whatever")
-    assertEquals(result, Right(None))
+    Prop.forAll(genHtmlAndMissingTag) { (missing, html) =>
+      val soup = PureSoup(html)
+      val result = soup.extract(missing)
+      assertEquals(result, Right(None))
+    }
   }
