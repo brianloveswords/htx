@@ -13,6 +13,7 @@ import org.http4s.Headers
 import org.typelevel.ci.*
 import cats.MonadError
 import cats.Monad
+import scala.concurrent.duration.*
 
 case object NoUriProvided extends NoStackTrace:
   override def getMessage: String = "No URI provided"
@@ -64,29 +65,33 @@ object mdlink extends IOApp:
         case status => IO.raiseError(UnexpectedStatus(uri, status))
     }
 
-  def run(args: List[String]): IO[ExitCode] = for
-    uri <- parseUri(args)
-    _ <- Console[IO].errorln(s"url: $uri")
-    result <- getHtml(uri)
-    (html, uri) = result
-    soup = PureSoup(html)
-    selector = Selector.unsafe("title")
-    element = soup.extract(selector)
-    title = element.fold("<title not found>")(_.text)
-    _ <- Console[IO].print(s"[$title]($uri)")
-  yield ExitCode.Success
+  def run(args: List[String]): IO[ExitCode] = {
+    for
+      uri <- parseUri(args)
+      _ <- Console[IO].errorln(s"url: $uri")
+      result <- getHtml(uri)
+      (html, uri) = result
+      soup = PureSoup(html)
+      selector = Selector.unsafe("title")
+      element = soup.extract(selector)
+      title = element.fold("<title not found>")(_.text)
+      _ <- Console[IO].print(s"[$title]($uri)")
+    yield ExitCode.Success
+  } handleErrorWith { err =>
+    Console[IO].errorln(err.getMessage).as(ExitCode.Error)
+  } timeout (5.seconds)
 
 // NOTE: since I'm only making one http request, this ends up being slower.
-object mdlinkBlaze extends IOApp:
-  import scala.concurrent.ExecutionContext.global
-  val blazeClient = BlazeClientBuilder[IO](global).resource
-  def run(args: List[String]): IO[ExitCode] =
-    val program = blazeClient.use { client =>
-      for
-        url <- parseUri(args)
-        html <- client.expect[String](url)
-        _ <- IO.println(s"$url")
-        _ <- IO.println(s"$html")
-      yield ExitCode.Success
-    }
-    program
+// object mdlinkBlaze extends IOApp:
+//   import scala.concurrent.ExecutionContext.global
+//   val blazeClient = BlazeClientBuilder[IO](global).resource
+//   def run(args: List[String]): IO[ExitCode] =
+//     val program = blazeClient.use { client =>
+//       for
+//         url <- parseUri(args)
+//         html <- client.expect[String](url)
+//         _ <- IO.println(s"$url")
+//         _ <- IO.println(s"$html")
+//       yield ExitCode.Success
+//     }
+//     program
