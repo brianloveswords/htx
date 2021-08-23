@@ -25,13 +25,13 @@ bin :
 	mkdir -p bin
 
 
-src/graal/reflect-config.json : target/scala-3.0.1/mdlink-assembly-0.1.0.jar
-	java \
-	-agentlib:native-image-agent=config-output-dir=src/graal \
-	-jar target/scala-3.0.1/mdlink-assembly-0.1.0.jar \
-	https://example.com
+# src/graal/reflect-config.json : target/scala-3.0.1/mdlink-assembly-0.1.0.jar
+# 	java \
+# 	-agentlib:native-image-agent=config-output-dir=src/graal \
+# 	-jar target/scala-3.0.1/mdlink-assembly-0.1.0.jar \
+# 	https://example.com
 
 
-target/scala-3.0.1/mdlink-assembly-0.1.0.jar : $(shell fd . 'src/main')
-	sbt assembly
-	touch $@
+# target/scala-3.0.1/mdlink-assembly-0.1.0.jar : $(shell fd . 'src/main')
+# 	sbt assembly
+# 	touch $@

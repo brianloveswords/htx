@@ -4,6 +4,8 @@ val circeVersion = "0.14.1"
 val fs2Version = "3.1.0"
 val http4sVersion = "1.0.0-M23"
 
+val graalConfigPath = "src/graal"
+
 lazy val main = project
   .in(file("."))
   .enablePlugins(JavaAppPackaging)
@@ -13,6 +15,7 @@ lazy val main = project
     name := "mdlink",
     version := "0.1.0",
     scalaVersion := scala3Version,
+    scalacOptions ++= Seq("-rewrite", "-indent"),
     libraryDependencies ++= Seq(
       "co.fs2" %% "fs2-core" % fs2Version,
       "co.fs2" %% "fs2-io" % fs2Version,
@@ -33,6 +36,10 @@ lazy val main = project
       "org.typelevel" %% "scalacheck-effect" % "1.0.2" % Test,
       "org.typelevel" %% "scalacheck-effect-munit" % "1.0.2" % Test,
     ),
+    // necessary for building native images
+    fork := true,
+    javaOptions += s"-agentlib:native-image-agent=config-output-dir=$graalConfigPath",
+
     // options
     Global / onChangedBuildSource := ReloadOnSourceChanges,
     Universal / javaOptions ++= Seq(s"-no-version-check"),

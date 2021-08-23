@@ -1,5 +1,6 @@
+addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.9.30")
+addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "1.0.0")
+addSbtPlugin("com.github.sbt" % "sbt-jacoco" % "3.0.3")
 addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.8.0")
 addSbtPlugin("io.github.davidgregory084" % "sbt-tpolecat" % "0.1.20")
-addSbtPlugin("com.github.sbt" % "sbt-jacoco" % "3.0.3")
 addSbtPlugin("org.scalameta" % "sbt-mdoc" % "2.2.22")
-addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "1.0.0")
