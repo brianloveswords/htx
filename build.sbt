@@ -2,12 +2,14 @@ val scala3Version = "3.0.1"
 
 val circeVersion = "0.14.1"
 val fs2Version = "3.1.0"
+val http4sVersion = "1.0.0-M23"
 
 lazy val main = project
   .in(file("."))
   .enablePlugins(JavaAppPackaging)
+  .enablePlugins(UniversalPlugin)
+  .enablePlugins(GraalVMNativeImagePlugin)
   .settings(
-    Test / parallelExecution := false,
     name := "mdlink",
     version := "0.1.0",
     scalaVersion := scala3Version,
@@ -18,6 +20,8 @@ lazy val main = project
       "org.jsoup" % "jsoup" % "1.14.2",
       "org.typelevel" %% "cats-core" % "2.6.1",
       "org.typelevel" %% "cats-effect" % "3.2.3",
+      "org.http4s" %% "http4s-dsl" % http4sVersion,
+      "org.http4s" %% "http4s-blaze-client" % http4sVersion,
       "io.circe" %% "circe-core" % circeVersion,
       "io.circe" %% "circe-generic" % circeVersion,
       "io.circe" %% "circe-parser" % circeVersion,
@@ -29,6 +33,10 @@ lazy val main = project
       "org.typelevel" %% "scalacheck-effect" % "1.0.2" % Test,
       "org.typelevel" %% "scalacheck-effect-munit" % "1.0.2" % Test,
     ),
+    // options
+    Global / onChangedBuildSource := ReloadOnSourceChanges,
+    Universal / javaOptions ++= Seq(s"-no-version-check"),
+    Test / parallelExecution := false,
   )
 
 lazy val docs = project

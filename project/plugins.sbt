@@ -1,4 +1,4 @@
-addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.3.4")
+addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.8.0")
 addSbtPlugin("io.github.davidgregory084" % "sbt-tpolecat" % "0.1.20")
 addSbtPlugin("com.github.sbt" % "sbt-jacoco" % "3.0.3")
 addSbtPlugin("org.scalameta" % "sbt-mdoc" % "2.2.22")
