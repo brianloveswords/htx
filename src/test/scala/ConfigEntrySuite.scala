@@ -1,23 +1,13 @@
 package mdlink
 
-import cats.effect.IO
-import cats.effect.SyncIO
-import munit.CatsEffectSuite
-import munit.ScalaCheckEffectSuite
-import org.scalacheck.Gen
-import org.scalacheck.Prop
-import org.scalacheck.Arbitrary
-import org.scalacheck.effect.PropF
-import io.circe.Decoder
-import io.circe.Encoder
-import io.circe.syntax.*
-import io.circe.parser.*
+import cats.implicits.*
 import io.circe.generic.auto.*
+import io.circe.parser.*
 
 class ConfigEntrySuite extends RoundTripSuite[ConfigEntry]:
   roundtrip
 
-  test("example: basic") {
+  test("example: detailed") {
     val jsonString = """
     |{
     |  "url": [
@@ -28,7 +18,7 @@ class ConfigEntrySuite extends RoundTripSuite[ConfigEntry]:
     |    "betterprogramming.pub",
     |    "levelup.gitconnected.com"
     |  ],
-    |  "extractors": {
+    |  "extract": {
     |    "title": {
     |      "selector": "meta[property='twitter:title']",
     |      "attribute": "content"
@@ -43,5 +33,22 @@ class ConfigEntrySuite extends RoundTripSuite[ConfigEntry]:
     |}
     """.stripMargin
     val result = decode[ConfigEntry](jsonString)
-    println(result)
+    val expected = ConfigEntry(
+      Matcher.Many(
+        List(
+          "medium.com",
+          "itnext.io",
+          "blog.skyliner.io",
+          "towardsdatascience.com",
+          "betterprogramming.pub",
+          "levelup.gitconnected.com",
+        ),
+      ),
+      Map(
+        "title" -> Extract("meta[property='twitter:title']", None),
+        "author" -> Extract("meta[name='author']", Some("Unknown Author")),
+      ),
+      Template("[{title}]({url}) by {author}"),
+    )
+    assert(result === Right(expected))
   }
