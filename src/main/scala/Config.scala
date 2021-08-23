@@ -3,6 +3,7 @@ package mdlink
 import cats.Eq
 import cats.effect.IO
 import cats.syntax.*
+import cats.implicits.*
 import io.circe.*
 import io.circe.generic.auto.*
 import io.circe.parser.*
@@ -10,14 +11,32 @@ import io.circe.syntax.*
 import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
 
-import scala.util.matching.Regex
-
+type ExtractMap = Map[String, Extract]
 type Config = Seq[ConfigEntry]
 
 case class ConfigEntry(
-    matcher: Matcher,
-    extractors: ExtractorMap,
+    url: Matcher,
+    extract: ExtractMap,
     template: Template,
 )
 
-type ExtractorMap = Map[String, Extractor]
+object ConfigEntry:
+  import Arbitrary.arbitrary
+
+  given Eq[ConfigEntry] = Eq.instance { (a, b) =>
+    val ConfigEntry(m1, e1, t1) = a
+    val ConfigEntry(m2, e2, t2) = b
+    (m1, e1, t1) === (m2, e2, t2)
+  }
+
+  given Arbitrary[ExtractMap] = Arbitrary {
+    Gen.mapOf(Gen.zip(Gen.alphaStr, arbitrary[Extract]))
+  }
+
+  given Arbitrary[ConfigEntry] = Arbitrary {
+    for
+      matcher <- arbitrary[Matcher]
+      extractors <- arbitrary[ExtractMap]
+      template <- arbitrary[Template]
+    yield ConfigEntry(matcher, extractors, template)
+  }

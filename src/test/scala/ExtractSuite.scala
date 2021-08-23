@@ -2,5 +2,5 @@ package mdlink
 
 import io.circe.generic.auto.*
 
-class TemplateSuite extends RoundTripSuite[Template]:
+class ExtractSuite extends RoundTripSuite[Extract]:
   roundtrip

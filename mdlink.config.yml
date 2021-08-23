@@ -1,4 +1,4 @@
-- match:
+- url:
       - medium.com
       - itnext.io
       - blog.skyliner.io
@@ -15,19 +15,19 @@
           fallback: "Unknown Author"
   template: "[{title}]({url}) by {author}"
 
-- match: jvns.ca
+- url: jvns.ca
   extractors: { title: { selector: "title" } }
   template: "[{title}]({url}) by Julia Evans"
 
-- match: mcfunley.com
+- url: mcfunley.com
   extractors: { title: { selector: ".post-heading h4 a" } }
   template: "[{title}]({url}) by Dan McKinley"
 
-- match: lihaoyi.com
+- url: lihaoyi.com
   extractors: { title: { selector: title } }
   template: "[{title}]({url}) by Li Haoyi"
 
-- match: css-tricks.com
+- url: css-tricks.com
   extractors:
       title:
           selector: ".article-title"
@@ -37,18 +37,18 @@
           fallback: "heck"
   template: "[{title}]({url}) by {author}"
 
-- match: chelseatroy.com
+- url: chelseatroy.com
   extractors:
       title:
           selector: meta[property='og:title']
           attribute: content
   template: "[{title}]({url}) by Chelsea Troy"
 
-- match: buttondown.email/j2kun
+- url: buttondown.email/j2kun
   extractors: { title: { selector: title } }
   template: "[{title}]({url}) by Jeremy Kun"
 
-- match: rockthejvm.com
+- url: rockthejvm.com
   extractors:
       title:
           selector: meta[property='og:title']
@@ -58,7 +58,7 @@
           attribute: content
   template: "[{title}]({url}) by {author}"
 
-- match: percona.com
+- url: percona.com
   extractors:
       title:
           selector: h1
@@ -67,7 +67,7 @@
           attribute: content
   template: "[{title}]({url}) by {author}"
 
-- match: github.com
+- url: github.com
   extractors:
       name:
           selector: title
@@ -79,7 +79,7 @@
           template: "{1}"
   template: "[{name}]({url}): {description}"
 
-- match:
+- url:
       type: regex
       pattern: ".*"
   extractors: { title: { selector: title } }
