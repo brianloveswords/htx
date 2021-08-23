@@ -5,10 +5,14 @@ import munit.CatsEffectSuite
 import scala.concurrent.duration.*
 import org.scalacheck.Prop
 import org.scalacheck.Gen
+import org.scalacheck.rng.Seed
 
 class PureSoupSuite extends CommonSuite:
+  val genTag: Gen[String] =
+    genLowerNonEmpty map ("x-" + _)
+
   val genHtmlParts: Gen[(String, String, String, String)] = Gen.zip(
-    genLowerNonEmpty,
+    genTag,
     genLowerNonEmpty,
     genLowerNonEmpty,
     genLowerNonEmpty,
@@ -16,7 +20,7 @@ class PureSoupSuite extends CommonSuite:
 
   val genHtmlAndMissingTag: Gen[(String, String)] = genHtmlParts flatMap {
     (tag, attr, value, text) =>
-      for missing <- genLowerNonEmpty.suchThat(_ ne tag)
+      for missing <- genTag.suchThat(_ ne tag)
       yield (missing, htmlFromParts(tag, attr, value, text))
   }
 
@@ -25,31 +29,25 @@ class PureSoupSuite extends CommonSuite:
       attr: String,
       value: String,
       text: String,
-  ): String = s"""
-    |<html>
-    |  <body>
-    |    <$tag $attr="$value"><span>$text</span></$tag>
-    |  </body>
-    |</html>
-    """.stripMargin
+  ): String = s"""<$tag $attr="$value"><span>$text</span></$tag>""".stripMargin
 
   test("extract: found") {
-    Prop.forAll(genHtmlParts) { (tag, attr, value, text) =>
-      val soup = PureSoup(htmlFromParts(tag, attr, value, text))
+    Prop.forAllNoShrink(genHtmlParts) { (tag, attr, value, text) =>
+      val html = htmlFromParts(tag, attr, value, text)
+      val soup = PureSoup(html)
       val Right(result) = Selector(tag) map soup.extract
       assertEquals(
         result,
-        Some(
-          Element(tag, Map(attr -> value), text),
-        ),
+        Some(Element(tag, Map(attr -> value), text)),
+        s"with soup: $soup",
       )
     }
   }
 
   test("extract: not found") {
-    Prop.forAll(genHtmlAndMissingTag) { (missing, html) =>
+    Prop.forAllNoShrink(genHtmlAndMissingTag) { (missing, html) =>
       val soup = PureSoup(html)
       val Right(result) = Selector(missing) map soup.extract
-      assertEquals(result, None)
+      assertEquals(result, None, s"with soup: $soup")
     }
   }

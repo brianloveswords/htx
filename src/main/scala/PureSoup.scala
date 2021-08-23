@@ -8,8 +8,6 @@ import scala.jdk.CollectionConverters.*
 
 case class Element(name: String, attrs: Map[String, String], text: String)
 
-type ExtractResult = Either[String, Option[Element]]
-
 case class PureSoup(html: String):
   lazy val doc = Jsoup.parse(html)
 
@@ -23,3 +21,5 @@ case class PureSoup(html: String):
       val text = el.text
       Element(name, attrs, text)
     }
+
+  override def toString: String = s"PureSoup(html = $html, doc = $doc)"
