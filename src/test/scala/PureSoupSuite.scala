@@ -38,13 +38,11 @@ class PureSoupSuite extends CommonSuite:
   test("extract: found") {
     Prop.forAll(genHtmlParts) { (tag, attr, value, text) =>
       val soup = PureSoup(htmlFromParts(tag, attr, value, text))
-      val result = soup.extract(tag)
+      val Right(result) = Selector(tag) map soup.extract
       assertEquals(
         result,
-        Right(
-          Some(
-            Element(tag, Map(attr -> value), text),
-          ),
+        Some(
+          Element(tag, Map(attr -> value), text),
         ),
       )
     }
@@ -53,7 +51,9 @@ class PureSoupSuite extends CommonSuite:
   test("extract: not found") {
     Prop.forAll(genHtmlAndMissingTag) { (missing, html) =>
       val soup = PureSoup(html)
-      val result = soup.extract(missing)
-      assertEquals(result, Right(None))
+      val Right(result) = Selector(missing) map soup.extract
+      assertEquals(result, None)
     }
   }
+
+  test("extract: found with attributes") {}
