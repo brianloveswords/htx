@@ -32,7 +32,7 @@ class ConfigEntrySuite extends RoundTripSuite[ConfigEntry]:
     |  "template": "[{title}]({url}) by {author}"
     |}
     """.stripMargin
-    val result = decode[ConfigEntry](jsonString)
+    val mkSelector = Selector.unsafe
     val expected = ConfigEntry(
       Matcher.Many(
         List(
@@ -45,10 +45,18 @@ class ConfigEntrySuite extends RoundTripSuite[ConfigEntry]:
         ),
       ),
       Map(
-        "title" -> Extract("meta[property='twitter:title']", None),
-        "author" -> Extract("meta[name='author']", Some("Unknown Author")),
+        "title" -> Extract(
+          mkSelector("meta[property='twitter:title']"),
+          None,
+        ),
+        "author" -> Extract(
+          mkSelector("meta[name='author']"),
+          Some("Unknown Author"),
+        ),
       ),
       Template("[{title}]({url}) by {author}"),
     )
-    assert(result === Right(expected))
+
+    val Right(result) = decode[ConfigEntry](jsonString)
+    assert(result === expected, s"$result !== $expected")
   }

@@ -1,16 +1,22 @@
 package mdlink
 
 import cats.Eq
+import cats.implicits.*
 import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
 
 case class Extract(
-    selector: String,
+    selector: Selector,
     fallback: Option[String],
 )
 
 object Extract:
-  given Eq[Extract] = Eq.fromUniversalEquals
+  given Eq[Extract] = Eq.instance { (a, b) =>
+    a.selector === b.selector &&
+    a.fallback === b.fallback
+  }
   given Arbitrary[Extract] = Arbitrary {
-    Gen.zip(Gen.alphaStr, Gen.option(Gen.alphaStr)).map(Extract(_, _))
+    Gen
+      .zip(Arbitrary.arbitrary[Selector], Gen.option(Gen.alphaStr))
+      .map(Extract(_, _))
   }

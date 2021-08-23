@@ -53,5 +53,3 @@ class PureSoupSuite extends CommonSuite:
       assertEquals(result, None)
     }
   }
-
-  test("extract: found with attributes") {}

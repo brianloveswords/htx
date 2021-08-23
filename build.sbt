@@ -7,6 +7,7 @@ lazy val main = project
   .in(file("."))
   .enablePlugins(JavaAppPackaging)
   .settings(
+    Test / parallelExecution := false,
     name := "mdlink",
     version := "0.1.0",
     scalaVersion := scala3Version,

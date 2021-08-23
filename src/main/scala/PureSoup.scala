@@ -14,7 +14,7 @@ case class PureSoup(html: String):
   lazy val doc = Jsoup.parse(html)
 
   def extract(selector: Selector): Option[Element] =
-    val element = doc.selectFirst(selector.toEvaluator)
+    val element = doc.selectFirst(selector)
     safeOption(element) map { el =>
       val name = el.nodeName.toLowerCase
       val attrs = el.attributes.asScala.map { attr =>

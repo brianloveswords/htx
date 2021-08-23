@@ -12,26 +12,26 @@ import org.jsoup.select.Evaluator
 import scala.jdk.CollectionConverters.*
 import org.scalacheck.Arbitrary
 
-case class Selector private (source: String, evaluator: Evaluator):
-  private[mdlink] def toEvaluator: Evaluator = evaluator
+case class Selector private (source: String, private val evaluator: Evaluator)
 
 object Selector:
-  def apply(query: String): Either[Throwable, Selector] = safeEither(
-    QueryParser.parse(query),
-  ) map (Selector(query, _))
+  def apply(query: String): Either[Throwable, Selector] =
+    safeEither(unsafe(query))
+
+  private[mdlink] given Conversion[Selector, Evaluator] = _.evaluator
+
+  private[mdlink] def unsafe(query: String): Selector =
+    Selector(query, QueryParser.parse(query))
 
   given Eq[Selector] = Eq.instance { (a, b) => a.source == b.source }
 
-  given Decoder[Selector] = Decoder[SelectorSerializable] flatMap { s =>
-    s.toSelector match
+  given Decoder[Selector] = Decoder[String] flatMap { s =>
+    Selector(s) match
       case Left(e)         => Decoder.failedWithMessage(e.getMessage)
       case Right(selector) => Decoder.const(selector)
   }
 
-  given Encoder[Selector] = Encoder.instance {
-    case Selector(source, evaluator) =>
-      SelectorSerializable(source).asJson
-  }
+  given Encoder[Selector] = Encoder.instance(_.source.asJson)
 
   given Arbitrary[Selector] = Arbitrary {
     genLowerNonEmpty.map { nonEmpty =>
@@ -40,10 +40,3 @@ object Selector:
         case Right(selector) => selector
     }
   }
-
-private case class SelectorSerializable(`source`: String):
-  def toSelector: Either[Throwable, Selector] = Selector(`source`)
-
-private object SelectorSerializable:
-  def apply(selector: Selector): SelectorSerializable =
-    SelectorSerializable(selector.source)
