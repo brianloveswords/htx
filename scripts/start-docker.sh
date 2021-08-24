@@ -9,7 +9,7 @@ docker run -it --rm \
     -v "$PWD"/htx-cli:/workspace/htx-cli \
     -v "$PWD"/htx-core:/workspace/htx-core \
     -v "$PWD"/htx-tests:/workspace/htx-tests \
-    -v "$PWD"/project:/workspace/project \
+    -v "$PWD"/project/plugins.sbt:/workspace/project/plugins.sbt \
     -v "$PWD"/build.sbt:/workspace/build.sbt \
     -v "$PWD"/sbt:/workspace/sbt \
     -w /workspace \
