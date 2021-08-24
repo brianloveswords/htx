@@ -60,3 +60,11 @@ lazy val core = project
     moduleName := "htx-core",
     Universal / javaOptions ++= Seq(s"-no-version-check"),
   )
+
+lazy val tests = project
+  .in(file("htx-tests"))
+  .configs(IntegrationTest)
+  .settings(
+    fork := true,
+  )
+  .dependsOn(core)
