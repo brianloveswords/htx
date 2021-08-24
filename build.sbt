@@ -46,7 +46,6 @@ inThisBuild(
 
     // options
     Global / onChangedBuildSource := ReloadOnSourceChanges,
-    Test / parallelExecution := false,
   ),
 )
 
@@ -72,14 +71,22 @@ def liveFilter(name: String): Boolean = name endsWith "LiveTest"
 def unitFilter(name: String): Boolean =
   (name endsWith "Test") && !liveFilter(name)
 
+addCommandAlias("testLive", "tests/LiveTest/test")
+lazy val testAll = taskKey[Unit]("Run all tests")
+
 lazy val tests = project
   .in(file("htx-tests"))
   .dependsOn(core, cli)
   .configs(LiveTest)
   .settings(
-    inConfig(LiveTest)(Defaults.testTasks),
     fork := true,
-    Defaults.itSettings,
+    inConfig(LiveTest)(Defaults.testTasks),
+    Test / parallelExecution := true,
     Test / testOptions := Seq(Tests.Filter(unitFilter)),
+    LiveTest / parallelExecution := false,
     LiveTest / testOptions := Seq(Tests.Filter(liveFilter)),
+    testAll := {
+      (LiveTest / test).value
+      (Test / test).value
+    },
   )
