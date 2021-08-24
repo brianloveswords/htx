@@ -1,19 +1,20 @@
 package mdlink
+import cats.Monad
+import cats.MonadError
 import cats.effect.*
 import cats.effect.std.*
-import scala.util.control.NoStackTrace
-import org.http4s.client.JavaNetClientBuilder
-import org.http4s.blaze.client.BlazeClientBuilder
-import org.http4s.implicits.*
-import org.http4s.Uri
-import org.http4s.ParseFailure
-import java.net.URL
-import org.http4s.Status
 import org.http4s.Headers
+import org.http4s.ParseFailure
+import org.http4s.Status
+import org.http4s.Uri
+import org.http4s.blaze.client.BlazeClientBuilder
+import org.http4s.client.JavaNetClientBuilder
+import org.http4s.implicits.*
 import org.typelevel.ci.*
-import cats.MonadError
-import cats.Monad
+
+import java.net.URL
 import scala.concurrent.duration.*
+import scala.util.control.NoStackTrace
 
 case object NoUriProvided extends NoStackTrace:
   override def getMessage: String = "No URI provided"
