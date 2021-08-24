@@ -1,4 +1,4 @@
-package mdlink
+package main
 
 import cats.Eq
 import cats.implicits.*

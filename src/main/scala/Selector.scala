@@ -1,4 +1,4 @@
-package mdlink
+package main
 
 import cats.implicits.*
 import cats.Eq
@@ -18,9 +18,9 @@ object Selector:
   def apply(query: String): Either[Throwable, Selector] =
     safeEither(unsafe(query))
 
-  private[mdlink] given Conversion[Selector, Evaluator] = _.evaluator
+  private[main] given Conversion[Selector, Evaluator] = _.evaluator
 
-  private[mdlink] def unsafe(query: String): Selector =
+  private[main] def unsafe(query: String): Selector =
     Selector(query, QueryParser.parse(query))
 
   given Eq[Selector] = Eq.instance { (a, b) => a.source == b.source }

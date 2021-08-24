@@ -1,5 +1,10 @@
 {
   "resources":{
-  "includes":[]},
+  "includes":[
+    {"pattern":"\\Qmdlink/\\E"}, 
+    {"pattern":"\\Qmunit/\\E"}, 
+    {"pattern":"\\Qmunit/internal/difflib/\\E"}, 
+    {"pattern":"\\Qscala/\\E"}
+  ]},
   "bundles":[]
 }

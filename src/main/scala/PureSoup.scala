@@ -1,4 +1,4 @@
-package mdlink
+package main
 
 import cats.implicits.*
 import org.jsoup.Jsoup

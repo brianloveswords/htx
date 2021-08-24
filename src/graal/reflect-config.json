@@ -66,6 +66,9 @@
   "name":"java.lang.Object[]"
 },
 {
+  "name":"java.lang.StackTraceElement[]"
+},
+{
   "name":"java.lang.String"
 },
 {
@@ -109,6 +112,98 @@
   "name":"javax.security.auth.x500.X500Principal",
   "fields":[{"name":"thisX500Name"}],
   "methods":[{"name":"<init>","parameterTypes":["sun.security.x509.X500Name"] }]
+},
+{
+  "name":"main.ConfigEntry$",
+  "fields":[{"name":"0bitmap$1"}]
+},
+{
+  "name":"main.ConfigEntrySuite",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"main.ConfigEntrySuite$$anon$1",
+  "fields":[{"name":"0bitmap$2"}]
+},
+{
+  "name":"main.ConfigEntrySuite$$anon$2",
+  "fields":[{"name":"0bitmap$4"}]
+},
+{
+  "name":"main.ConfigEntrySuite$$anon$3",
+  "fields":[{"name":"0bitmap$1"}]
+},
+{
+  "name":"main.ConfigEntrySuite$$anon$4",
+  "fields":[{"name":"0bitmap$3"}]
+},
+{
+  "name":"main.ConfigEntrySuite$$anon$5",
+  "fields":[{"name":"0bitmap$5"}]
+},
+{
+  "name":"main.ConfigEntrySuite$$anon$6",
+  "fields":[{"name":"0bitmap$6"}]
+},
+{
+  "name":"main.Extract$",
+  "fields":[{"name":"0bitmap$1"}]
+},
+{
+  "name":"main.ExtractSuite",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"main.ExtractSuite$$anon$1",
+  "fields":[{"name":"0bitmap$1"}]
+},
+{
+  "name":"main.ExtractSuite$$anon$2",
+  "fields":[{"name":"0bitmap$2"}]
+},
+{
+  "name":"main.Matcher$",
+  "fields":[{"name":"0bitmap$2"}]
+},
+{
+  "name":"main.Matcher$$anon$1",
+  "fields":[{"name":"0bitmap$1"}]
+},
+{
+  "name":"main.Matcher$$anon$2",
+  "fields":[{"name":"0bitmap$3"}]
+},
+{
+  "name":"main.MatcherSuite",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"main.PureSoup",
+  "fields":[{"name":"0bitmap$1"}]
+},
+{
+  "name":"main.PureSoupSuite",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"main.Selector$",
+  "fields":[{"name":"0bitmap$1"}]
+},
+{
+  "name":"main.SelectorSuite",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"main.Template$",
+  "fields":[{"name":"0bitmap$1"}]
+},
+{
+  "name":"main.TemplateSuite",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"main.TestIntegrationSuite",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
   "name":"mdlink.ConfigEntry$",
@@ -199,8 +294,12 @@
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
-  "name":"mdlink.utilSuite",
+  "name":"mdlink.TestIntegrationSuite",
   "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
+  "name":"mdlink.mdlink$",
+  "fields":[{"name":"0bitmap$1"}]
 },
 {
   "name":"munit.Framework",
@@ -213,6 +312,10 @@
 },
 {
   "name":"munit.Suite"
+},
+{
+  "name":"munit.internal.difflib.Delta",
+  "fields":[{"name":"0bitmap$1"}]
 },
 {
   "name":"org.http4s.Header$Raw$",

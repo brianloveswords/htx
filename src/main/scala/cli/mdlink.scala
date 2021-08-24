@@ -1,4 +1,6 @@
-package mdlink
+package main
+
+import cats.implicits.*
 import cats.Monad
 import cats.MonadError
 import cats.effect.*
@@ -16,69 +18,53 @@ import java.net.URL
 import scala.concurrent.duration.*
 import scala.util.control.NoStackTrace
 import scala.util.control.NonFatal
+import cats.MonadThrow
 
-case object NoUriProvided extends NoStackTrace:
-  override def getMessage: String = "No URI provided"
+trait CLI[F[_]](using Console[F])(using Async[F]):
+  private val client = JavaNetClientBuilder[F].create
+  private def getLocationHeader = getHeader("location")
 
-case class MissingLocationHeader(uri: Uri, headers: Headers)
-    extends NoStackTrace:
-  override def toString = s"Missing Location header for $uri, headers: $headers"
+  private def missingArgumentError[A] =
+    MonadThrow[F].raiseError[A](
+      IllegalArgumentException("No argument provided"),
+    )
 
-case class MalformedUri(uri: String, err: Throwable) extends NoStackTrace:
-  override def getMessage: String = s"Malformed URI $uri: $err"
+  private def showRedirect(uri: Uri): F[Unit] =
+    Console[F].errorln(s"following redirect: $uri")
 
-case class UnexpectedStatus(uri: Uri, status: Status) extends NoStackTrace:
-  override def getMessage: String =
-    s"Unexpected status for $uri: $status"
+  private def printErrorAndExit(err: Throwable): F[ExitCode] =
+    Console[F].errorln(err.getMessage).as(ExitCode.Error)
 
-private def parseUri(args: List[String]): IO[Uri] =
-  ioFromOption(NoUriProvided)(args.headOption).flatMap(parseUri)
+  private def extractFirstArg(args: List[String]): F[String] =
+    args.headOption.fold(missingArgumentError[String])(_.pure)
 
-private def parseUri(uri: String): IO[Uri] =
-  def toError(err: Throwable) = IO.raiseError(MalformedUri(uri, err))
-  def confirm(uri: Uri) =
-    try { URL(uri.toString); IO.pure(uri) }
-    catch { case NonFatal(err) => toError(err) }
-
-  Uri.fromString(uri).fold(toError, IO.pure).flatMap(confirm)
-
-private def getHeader(name: String)(headers: Headers): Option[String] =
-  headers.get(CIString(name)).map(_.head.value)
-
-object mdlink extends IOApp:
-  def getLocationHeader = getHeader("location")
-  val client = JavaNetClientBuilder[IO].create
-
-  private def showRedirect(uri: Uri): IO[Unit] =
-    Console[IO].errorln(s"following redirect: $uri")
-
-  def getHtml(uri: Uri): IO[(String, Uri)] =
+  private def getHtml(uri: Uri): F[(String, Uri)] =
     client.get(uri) { resp =>
       resp.status match
         case Status.Ok => resp.as[String].map((_, uri))
         case Status.MovedPermanently =>
           val headers = resp.headers
-          lazy val error = IO.raiseError(MissingLocationHeader(uri, headers))
+          lazy val error: F[String] = MissingLocationHeader.raise(uri, headers)
           getLocationHeader(headers)
-            .fold(error)(IO.pure)
+            .fold(error)(_.pure)
             .flatMap(parseUri)
             .flatTap(showRedirect)
             .flatMap(getHtml)
-        case status => IO.raiseError(UnexpectedStatus(uri, status))
+        case status => MonadThrow[F].raiseError(UnexpectedStatus(uri, status))
     }
 
-  def run(args: List[String]): IO[ExitCode] = {
-    for
-      uri <- parseUri(args)
-      _ <- Console[IO].errorln(s"url: $uri")
+  def run(args: List[String]): F[ExitCode] =
+    val program = for
+      uri <- extractFirstArg(args) flatMap parseUri
+      _ <- Console[F].errorln(s"url: $uri")
       result <- getHtml(uri)
       (html, uri) = result
       soup = PureSoup(html)
       selector = Selector.unsafe("title")
       element = soup.extract(selector)
       title = element.fold("<title not found>")(_.text)
-      _ <- Console[IO].print(s"[$title]($uri)")
+      _ <- Console[F].print(s"[$title]($uri)")
     yield ExitCode.Success
-  } handleErrorWith { err =>
-    Console[IO].errorln(err.getMessage).as(ExitCode.Error)
-  } timeout (5.seconds)
+    Async[F].timeout(program.handleErrorWith(printErrorAndExit), 10.seconds)
+
+object mdlink extends IOApp, CLI[IO]

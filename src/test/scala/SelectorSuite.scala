@@ -1,4 +1,4 @@
-package mdlink
+package main
 
 import io.circe.syntax.*
 import io.circe.parser.*

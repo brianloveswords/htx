@@ -1,4 +1,4 @@
-package mdlink
+package main
 
 import org.scalacheck.Prop
 import org.scalacheck.Arbitrary

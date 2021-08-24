@@ -1,9 +1,15 @@
 [
   {
+  "name":"java.lang.Throwable"
+  },
+  {
   "name":"sbt.ForkTags"
   },
   {
   "name":"sbt.testing.TestSelector"
+  },
+  {
+  "name":"[Ljava.lang.StackTraceElement;"
   },
   {
   "name":"sbt.testing.SuiteSelector"
@@ -16,6 +22,9 @@
   },
   {
   "name":"sbt.ForkMain$ForkEvent"
+  },
+  {
+  "name":"java.lang.Exception"
   },
   {
   "name":"sbt.ForkMain$SubclassFingerscan"
@@ -36,10 +45,19 @@
   "name":"[Lsbt.ForkMain$ForkEvent;"
   },
   {
+  "name":"java.util.Collections$EmptyList"
+  },
+  {
   "name":"[Lsbt.testing.TaskDef;"
   },
   {
   "name":"[Lsbt.testing.Selector;"
+  },
+  {
+  "name":"sbt.ForkMain$ForkError"
+  },
+  {
+  "name":"java.lang.StackTraceElement"
   },
   {
   "name":"java.lang.String"

@@ -1,4 +1,4 @@
-package mdlink
+package main
 
 import cats.implicits.*
 import io.circe.generic.auto.*

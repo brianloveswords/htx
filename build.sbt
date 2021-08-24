@@ -5,10 +5,7 @@ import scala.sys.process._
 //
 // Static Config
 //
-
-val scala3Version = "3.0.1"
-val appVersion = "0.1.0"
-val appName = "mdlink"
+val scalaVer = "3.0.1"
 
 val v = new {
   val fs2 = "3.1.0"
@@ -23,20 +20,21 @@ val v = new {
 
 val graalConfigPath = "src/graal"
 
+lazy val nativeBuild = inputKey[Unit]("Build a native image")
+lazy val nativePrep = inputKey[Unit]("Test & run app with tracing agent")
+lazy val debug = taskKey[Unit]("debug tasks")
+
 //
 // Task Keys
 //
-lazy val nativeImage = inputKey[Unit]("Build a native image")
-lazy val nativeImagePrep = inputKey[Unit]("Test & run app with tracing agent")
-
 lazy val main = project
   .in(file("."))
-  .enablePlugins(JavaAppPackaging)
-  .enablePlugins(UniversalPlugin)
+  .configs(IntegrationTest)
+  .enablePlugins(JavaAppPackaging, UniversalPlugin)
   .settings(
-    name := appName,
-    version := appVersion,
-    scalaVersion := scala3Version,
+    name := "mdlink",
+    version := "0.1.0",
+    scalaVersion := scalaVer,
     scalacOptions ++= Seq("-rewrite", "-indent"),
     libraryDependencies ++= Seq(
       // main
@@ -54,35 +52,38 @@ lazy val main = project
       "io.circe" %% "circe-yaml" % v.circe,
 
       // test
-      "org.typelevel" %% "munit-cats-effect-3" % v.munitCatsEffect % Test,
-      "org.typelevel" %% "scalacheck-effect" % v.scalaCheckEffect % Test,
-      "org.typelevel" %% "scalacheck-effect-munit" % v.scalaCheckEffect % Test,
+      "org.typelevel" %% "munit-cats-effect-3" % v.munitCatsEffect,
+      "org.typelevel" %% "scalacheck-effect" % v.scalaCheckEffect,
+      "org.typelevel" %% "scalacheck-effect-munit" % v.scalaCheckEffect,
     ),
-
-    // necessary for building native images
-    fork := true,
-    javaOptions += s"-agentlib:native-image-agent=config-merge-dir=$graalConfigPath",
 
     // options
     Global / onChangedBuildSource := ReloadOnSourceChanges,
     Universal / javaOptions ++= Seq(s"-no-version-check"),
     Test / parallelExecution := false,
 
-    // custom tasks
-    nativeImagePrep := Def
+    // native image config
+    Defaults.itSettings,
+    fork := true,
+    javaOptions += s"-agentlib:native-image-agent=config-merge-dir=$graalConfigPath",
+    nativePrep := Def
       .sequential(
-        (Test / test),
-        (Compile / run).toTask(" http://example.com"),
+        Test / test,
+        IntegrationTest / test,
       )
       .value,
-    nativeImage := {
+    nativeBuild := {
       // dependencies
-      nativeImagePrep.evaluated
+      (Test / test).value
+      (IntegrationTest / test).value
       (AssemblyKeys.assembly).value
+      val appName = name.value
+      val appVer = version.value
+      val scalaVer = scalaVersion.value
 
       // body
-      val packed = s"bin/$appName.original"
-      val unpacked = s"$packed.original"
+      val output = s"bin/$appName.original"
+      val packed = s"bin/$appName"
       val params = Seq(
         s"-H:ReflectionConfigurationFiles=$graalConfigPath/reflect-config.json",
         "-H:+AllowIncompleteClasspath",
@@ -90,14 +91,11 @@ lazy val main = project
         "--enable-url-protocols=http,https",
         "--no-fallback",
         "-jar",
-        s"target/scala-$scala3Version/$appName-assembly-$appVersion.jar",
-        s"bin/$appName.original",
+        s"target/scala-$scalaVer/$appName-assembly-$appVer.jar",
+        s"$output",
       )
-      val binDir = new File("bin")
-      IO.delete(binDir)
-      IO.createDirectory(binDir)
       s"native-image ${params.mkString(" ")}".!!
-      s"upx $unpacked -o $packed".!!
+      s"upx $output -o $packed".!!
     },
   )
 
@@ -106,5 +104,5 @@ lazy val docs = project
   .dependsOn(main)
   .enablePlugins(MdocPlugin)
   .settings(
-    scalaVersion := scala3Version,
+    scalaVersion := scalaVer,
   )

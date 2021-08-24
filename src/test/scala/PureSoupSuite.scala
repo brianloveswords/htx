@@ -1,4 +1,4 @@
-package mdlink
+package main
 
 import cats.effect.IO
 import munit.CatsEffectSuite
