@@ -7,7 +7,7 @@ import org.scalacheck.Prop
 import org.scalacheck.Gen
 import org.scalacheck.rng.Seed
 
-class PureSoupSuite extends CommonSuite:
+class PureSoupTest extends CommonSuite:
   val genTag: Gen[String] =
     genLowerNonEmpty map ("x-" + _)
 

@@ -1,5 +1,7 @@
 package dev.bjb.htx
 
+import munit.CatsEffectSuite
+import munit.ScalaCheckEffectSuite
 import org.scalacheck.Prop
 import org.scalacheck.Arbitrary
 import io.circe.Decoder
@@ -9,6 +11,8 @@ import io.circe.parser.*
 import io.circe.generic.auto.*
 import cats.implicits.*
 import cats.Eq
+
+trait CommonSuite extends CatsEffectSuite with ScalaCheckEffectSuite
 
 trait RoundTripSuite[T: Arbitrary: Decoder: Encoder: Eq] extends CommonSuite:
   def roundtrip: Unit = roundtrip { (a, b) => assert(a === b) }

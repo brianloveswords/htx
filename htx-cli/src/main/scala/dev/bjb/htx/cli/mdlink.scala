@@ -1,4 +1,4 @@
-package dev.bjb.htx
+package dev.bjb.htx.cli
 
 import cats.implicits.*
 import cats.Monad
@@ -13,6 +13,7 @@ import org.http4s.blaze.client.BlazeClientBuilder
 import org.http4s.client.JavaNetClientBuilder
 import org.http4s.implicits.*
 import org.typelevel.ci.*
+import dev.bjb.htx.*
 
 import java.net.URL
 import scala.concurrent.duration.*

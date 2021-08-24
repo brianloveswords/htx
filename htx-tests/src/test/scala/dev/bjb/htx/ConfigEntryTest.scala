@@ -4,7 +4,7 @@ import cats.implicits.*
 import io.circe.generic.auto.*
 import io.circe.parser.*
 
-class ConfigEntrySuite extends RoundTripSuite[ConfigEntry]:
+class ConfigEntryTest extends RoundTripSuite[ConfigEntry]:
   roundtrip
 
   test("example: detailed") {

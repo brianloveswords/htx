@@ -5,7 +5,7 @@ import io.circe.parser.*
 import io.circe.generic.auto.*
 import io.circe.DecodingFailure
 
-class SelectorSuite extends RoundTripSuite[Selector]:
+class SelectorTest extends RoundTripSuite[Selector]:
   roundtrip
 
   test("example: bad decoder") {

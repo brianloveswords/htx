@@ -1,5 +1,6 @@
 package dev.bjb.htx
 
+import cli.CLI
 import cats.implicits.*
 import cats.effect.ExitCode
 import cats.effect.std.Console
@@ -32,7 +33,7 @@ def mkConsole: IO[MockConsole] =
     def getStdio = stdio.get
   }
 
-class TestIntegrationSuite extends CommonSuite:
+class CliLiveTest extends CommonSuite:
   test("example") {
     for
       console <- mkConsole

@@ -20,7 +20,7 @@ val v = new {
 
 inThisBuild(
   List(
-    version := "0.1.0",
+    version := "1.0.0",
     scalaVersion := scalaVer,
     scalacOptions ++= Seq("-rewrite", "-indent"),
     libraryDependencies ++= Seq(
@@ -54,17 +54,32 @@ name := "htxRoot"
 
 lazy val core = project
   .in(file("htx-core"))
-  .configs(IntegrationTest)
   .enablePlugins(JavaAppPackaging, UniversalPlugin)
   .settings(
     moduleName := "htx-core",
-    Universal / javaOptions ++= Seq(s"-no-version-check"),
   )
+
+lazy val cli = project
+  .in(file("htx-cli"))
+  .dependsOn(core)
+  .enablePlugins(JavaAppPackaging, UniversalPlugin)
+  .settings(
+    moduleName := "htx-cli",
+  )
+
+lazy val LiveTest = config("live") extend (Test)
+def liveFilter(name: String): Boolean = name endsWith "LiveTest"
+def unitFilter(name: String): Boolean =
+  (name endsWith "Test") && !liveFilter(name)
 
 lazy val tests = project
   .in(file("htx-tests"))
-  .configs(IntegrationTest)
+  .dependsOn(core, cli)
+  .configs(LiveTest)
   .settings(
+    inConfig(LiveTest)(Defaults.testTasks),
     fork := true,
+    Defaults.itSettings,
+    Test / testOptions := Seq(Tests.Filter(unitFilter)),
+    LiveTest / testOptions := Seq(Tests.Filter(liveFilter)),
   )
-  .dependsOn(core)
