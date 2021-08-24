@@ -1,6 +1,6 @@
 package dev.bjb.htx
 
-import cli.CLI
+import cli.Cli
 import cats.implicits.*
 import cats.effect.ExitCode
 import cats.effect.std.Console
@@ -37,7 +37,7 @@ class CliLiveTest extends CommonSuite:
   test("example") {
     for
       console <- mkConsole
-      testCli = new CLI[IO](using console) {}
+      testCli = new Cli[IO](using console) {}
       result <- testCli.run(List("https://example.com"))
       stdio <- console.getStdio
     yield

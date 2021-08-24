@@ -61,9 +61,19 @@ lazy val core = project
 lazy val cli = project
   .in(file("htx-cli"))
   .dependsOn(core)
-  .enablePlugins(JavaAppPackaging, UniversalPlugin)
+  .enablePlugins(JavaAppPackaging, UniversalPlugin, NativeImagePlugin)
   .settings(
     moduleName := "htx-cli",
+    nativeImageVersion := "21.2.0",
+    assembly / mainClass := Some("dev.bjb.htx.cli.Main"),
+    assembly / assemblyJarName := "htx.jar",
+    assembly / assemblyMergeStrategy := {
+      case "reflect.properties" => MergeStrategy.first
+      case x =>
+        val oldStrategy = (assembly / assemblyMergeStrategy).value
+        oldStrategy(x)
+    },
+    Compile / mainClass := Some("dev.bjb.htx.cli.Main"),
   )
 
 lazy val LiveTest = config("live") extend (Test)
