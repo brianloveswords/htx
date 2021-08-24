@@ -15,6 +15,7 @@ import org.typelevel.ci.*
 import java.net.URL
 import scala.concurrent.duration.*
 import scala.util.control.NoStackTrace
+import scala.util.control.NonFatal
 
 case object NoUriProvided extends NoStackTrace:
   override def getMessage: String = "No URI provided"
@@ -37,19 +38,19 @@ private def parseUri(uri: String): IO[Uri] =
   def toError(err: Throwable) = IO.raiseError(MalformedUri(uri, err))
   def confirm(uri: Uri) =
     try { URL(uri.toString); IO.pure(uri) }
-    catch { case err: Throwable => toError(err) }
+    catch { case NonFatal(err) => toError(err) }
 
   Uri.fromString(uri).fold(toError, IO.pure).flatMap(confirm)
 
 private def getHeader(name: String)(headers: Headers): Option[String] =
   headers.get(CIString(name)).map(_.head.value)
 
-private def showRedirect(uri: Uri): IO[Unit] =
-  Console[IO].errorln(s"following redirect: $uri")
-
 object mdlink extends IOApp:
   def getLocationHeader = getHeader("location")
   val client = JavaNetClientBuilder[IO].create
+
+  private def showRedirect(uri: Uri): IO[Unit] =
+    Console[IO].errorln(s"following redirect: $uri")
 
   def getHtml(uri: Uri): IO[(String, Uri)] =
     client.get(uri) { resp =>
@@ -81,18 +82,3 @@ object mdlink extends IOApp:
   } handleErrorWith { err =>
     Console[IO].errorln(err.getMessage).as(ExitCode.Error)
   } timeout (5.seconds)
-
-// NOTE: since I'm only making one http request, this ends up being slower.
-// object mdlinkBlaze extends IOApp:
-//   import scala.concurrent.ExecutionContext.global
-//   val blazeClient = BlazeClientBuilder[IO](global).resource
-//   def run(args: List[String]): IO[ExitCode] =
-//     val program = blazeClient.use { client =>
-//       for
-//         url <- parseUri(args)
-//         html <- client.expect[String](url)
-//         _ <- IO.println(s"$url")
-//         _ <- IO.println(s"$html")
-//       yield ExitCode.Success
-//     }
-//     program

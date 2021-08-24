@@ -1,7 +1,8 @@
 package mdlink
 
-import org.scalacheck.Gen
 import cats.effect.IO
+import org.scalacheck.Gen
+
 import scala.util.control.NonFatal
 
 def ioFromOption[A](ex: Throwable)(opt: Option[A]): IO[A] =

@@ -199,6 +199,10 @@
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
 {
+  "name":"mdlink.utilSuite",
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+{
   "name":"munit.Framework",
   "methods":[{"name":"<init>","parameterTypes":[] }]
 },
