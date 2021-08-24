@@ -64,7 +64,6 @@ lazy val cli = project
   .enablePlugins(JavaAppPackaging, UniversalPlugin, NativeImagePlugin)
   .settings(
     moduleName := "htx-cli",
-    nativeImageVersion := "21.2.0",
     assembly / mainClass := Some("dev.bjb.htx.cli.Main"),
     assembly / assemblyJarName := "htx.jar",
     assembly / assemblyMergeStrategy := {
@@ -72,6 +71,27 @@ lazy val cli = project
       case x =>
         val oldStrategy = (assembly / assemblyMergeStrategy).value
         oldStrategy(x)
+    },
+    nativeImageVersion := "21.2.0",
+    nativeImageOptions ++= {
+      val optMusl = sys.env
+        .get("NATIVE_IMAGE_MUSL")
+        .map(path => s"-H:UseMuslC=$path")
+        .toSeq
+      val optStatic = sys.env
+        .get("NATIVE_IMAGE_STATIC")
+        .map(_.toBoolean)
+        .filter(identity)
+        .map(_ => "--static")
+        .toSeq
+      val optMostlyStatic = sys.env
+        .get("NATIVE_IMAGE_MOSTLY_STATIC")
+        .map(_.toBoolean)
+        .filter(identity)
+        .map(_ => "-H:+StaticExecutableWithDynamicLibC")
+        .toSeq
+
+      optMusl ++ optStatic ++ optMostlyStatic
     },
     Compile / mainClass := Some("dev.bjb.htx.cli.Main"),
   )
