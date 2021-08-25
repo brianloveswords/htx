@@ -47,10 +47,12 @@ class ConfigEntryTest extends RoundTripSuite[ConfigEntry]:
       Map(
         "title" -> Extract(
           mkSelector("meta[property='twitter:title']"),
+          Some("content"),
           None,
         ),
         "author" -> Extract(
           mkSelector("meta[name='author']"),
+          Some("content"),
           Some("Unknown Author"),
         ),
       ),
@@ -60,3 +62,7 @@ class ConfigEntryTest extends RoundTripSuite[ConfigEntry]:
     val Right(result) = decode[ConfigEntry](jsonString)
     assert(result === expected, s"$result !== $expected")
   }
+/*
+ConfigEntry(Many(List(medium.com, itnext.io, blog.skyliner.io, towardsdatascience.com, betterprogramming.pub, levelup.gitconnected.com)),Map(title -> Extract(Selector(meta[property='twitter:title'],meta[property=twitter:title]),None,Some(content)), author -> Extract(Selector(meta[name='author'],meta[name=author]),Some(Unknown Author),Some(content))),Template([{title}]({url}) by {author}))
+ConfigEntry(Many(List(medium.com, itnext.io, blog.skyliner.io, towardsdatascience.com, betterprogramming.pub, levelup.gitconnected.com)),Map(title -> Extract(Selector(meta[property='twitter:title'],meta[property=twitter:title]),None,None), author -> Extract(Selector(meta[name='author'],meta[name=author]),Some(Unknown Author),None)),Template([{title}]({url}) by {author}))
+ */

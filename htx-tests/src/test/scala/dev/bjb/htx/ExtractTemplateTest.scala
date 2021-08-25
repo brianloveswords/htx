@@ -8,19 +8,22 @@ import scala.util.control.NoStackTrace
 enum ExtractTemplateError extends NoStackTrace:
   case EmptyTemplate
 
-case class ExtractTemplate(aliasList: List[String], template: String)
+case class ExtractTemplate private (
+    extractors: Seq[Extract],
+    template: Template,
+)
 case object ExtractTemplate:
-  def apply(
-      aliasList: List[String],
-      template: String,
+  def from(
+      extractors: Seq[Extract],
+      template: Template,
   ): Either[ExtractTemplateError, ExtractTemplate] =
     Left(ExtractTemplateError.EmptyTemplate)
 
 class ExtractTemplateTest extends CommonSuite:
   test("parse empty pair") {
-    val result = ExtractTemplate(
-      aliasList = List(),
-      template = "",
+    val result = ExtractTemplate.from(
+      extractors = List(),
+      template = Template("cool"),
     )
     assertEquals(result, Left(ExtractTemplateError.EmptyTemplate))
   }
