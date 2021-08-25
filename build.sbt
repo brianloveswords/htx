@@ -15,6 +15,17 @@ val v = new {
   val munitCatsEffect = "1.0.3"
 }
 
+lazy val operatingSystem = settingKey[OS](
+  "Current operating system",
+)
+
+lazy val upxPath = settingKey[String](
+  "Path to UPX binary",
+)
+lazy val nativeImageCompressed = taskKey[Unit](
+  "Build and compress the native image",
+)
+
 inThisBuild(
   List(
     version := "1.0.0",
@@ -100,7 +111,37 @@ lazy val cli = project
 
       musl ++ static ++ mostlyStatic
     },
+    operatingSystem := OS.get,
+    upxPath := {
+      val os = operatingSystem.value
+      val (sep, suffix) = os match {
+        case Windows => ("\\", "exe")
+        case Linux   => ("/", "linux")
+        case MacOS   => ("/", "macos")
+      }
+      val upx = "upx." + suffix
+      List("project", "bin", "upx", upx).mkString(sep)
+    },
+    nativeImageCompressed := {
+      nativeImage.value
+      val os = operatingSystem.value
+      val upx = upxPath.value
+
+      val target = os match {
+        case Windows => "target\\htx.exe"
+        case _       => "target/htx"
+      }
+
+      val command = List(upx, target)
+      streams.value.log.info("Running: " + command.mkString(" "))
+
+      val exit = Process(command).!
+      if (exit != 0) {
+        throw new MessageOnlyException(s"non-zero exit from UPX: $exit")
+      }
+    },
     Compile / mainClass := Some("dev.bjb.htx.cli.Main"),
+    Global / excludeLintKeys += nativeImageVersion,
   )
 
 lazy val LiveTest = config("live") extend (Test)
