@@ -34,13 +34,13 @@ jobs:
               if: ${{ matrix.os != 'windows-latest' }}
             - run: echo $(pwd)
               shell: bash
-            - name: sbt test
+            - name: (Windows) sbt cli/nativeImageCompressed
               shell: cmd
               if: ${{ matrix.os == 'windows-latest' }}
               run: >-
                   "C:\Program Files (x86)\Microsoft Visual
                   Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat" && sbt
-                  cli/nativeImage
+                  cli/nativeImageCompressed
             - uses: actions/upload-artifact@v2
               with:
                   path: ${{ matrix.local_path }}
