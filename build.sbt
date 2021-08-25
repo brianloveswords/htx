@@ -63,6 +63,7 @@ lazy val cli = project
     moduleName := "htx-cli",
     assembly / mainClass := Some("dev.bjb.htx.cli.Main"),
     assembly / assemblyJarName := "htx.jar",
+    nativeImageVersion := "21.2.0",
     nativeImageInstalled := {
       val installed = sys.env
         .get("NATIVE_IMAGE_INSTALLED")
