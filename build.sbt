@@ -63,26 +63,41 @@ lazy val cli = project
     moduleName := "htx-cli",
     assembly / mainClass := Some("dev.bjb.htx.cli.Main"),
     assembly / assemblyJarName := "htx.jar",
-    nativeImageInstalled := true,
+    nativeImageInstalled := {
+      val installed = sys.env
+        .get("NATIVE_IMAGE_INSTALLED")
+        .map(_.toBoolean)
+        .getOrElse(false)
+
+      val inCi = sys.env
+        .get("CI")
+        .map(_.toBoolean)
+        .getOrElse(false)
+
+      installed || (!inCi)
+    },
+    nativeImageOutput := file("target") / "htx",
     nativeImageOptions ++= {
-      val optMusl = sys.env
+      val musl = sys.env
         .get("NATIVE_IMAGE_MUSL")
         .map(path => s"--libc=musl")
         .toSeq
-      val optStatic = sys.env
+
+      val static = sys.env
         .get("NATIVE_IMAGE_STATIC")
         .map(_.toBoolean)
         .filter(identity)
         .map(_ => "--static")
         .toSeq
-      val optMostlyStatic = sys.env
+
+      val mostlyStatic = sys.env
         .get("NATIVE_IMAGE_MOSTLY_STATIC")
         .map(_.toBoolean)
         .filter(identity)
         .map(_ => "-H:+StaticExecutableWithDynamicLibC")
         .toSeq
 
-      optMusl ++ optStatic ++ optMostlyStatic
+      musl ++ static ++ mostlyStatic
     },
     Compile / mainClass := Some("dev.bjb.htx.cli.Main"),
   )

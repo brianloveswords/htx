@@ -7,7 +7,7 @@ set -euo pipefail
 function main() {
     if [ "$PWD" = "/workspace" ]; then
         sbt cli/nativeImage
-        cp htx-cli/target/native-image/cli /wormhole/htx.amd64.linux.static
+        cp target/htx /wormhole/htx.amd64.linux.static
         upx /wormhole/htx.amd64.linux.static
         exit 0
     fi
