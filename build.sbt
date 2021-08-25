@@ -2,9 +2,6 @@ import java.io.File
 import sbtassembly.AssemblyKeys
 import scala.sys.process._
 
-//
-// Static Config
-//
 val scalaVer = "3.0.1"
 
 val v = new {
@@ -66,17 +63,10 @@ lazy val cli = project
     moduleName := "htx-cli",
     assembly / mainClass := Some("dev.bjb.htx.cli.Main"),
     assembly / assemblyJarName := "htx.jar",
-    assembly / assemblyMergeStrategy := {
-      case "reflect.properties" => MergeStrategy.first
-      case x =>
-        val oldStrategy = (assembly / assemblyMergeStrategy).value
-        oldStrategy(x)
-    },
-    nativeImageVersion := "21.2.0",
+    nativeImageInstalled := true,
     nativeImageOptions ++= {
       val optMusl = sys.env
         .get("NATIVE_IMAGE_MUSL")
-        // .map(path => s"-H:UseMuslC=$path")
         .map(path => s"--libc=musl")
         .toSeq
       val optStatic = sys.env
