@@ -76,7 +76,8 @@ lazy val cli = project
     nativeImageOptions ++= {
       val optMusl = sys.env
         .get("NATIVE_IMAGE_MUSL")
-        .map(path => s"-H:UseMuslC=$path")
+        // .map(path => s"-H:UseMuslC=$path")
+        .map(path => s"--libc=musl")
         .toSeq
       val optStatic = sys.env
         .get("NATIVE_IMAGE_STATIC")
