@@ -13,6 +13,7 @@ case class Extract(
 
 object Extract:
   def apply(selector: Selector): Extract = Extract(selector, None, None)
+  def unsafe(text: String): Extract = Extract(Selector.unsafe(text), None, None)
 
   given Eq[Extract] = Eq.instance { (a, b) =>
     a.selector === b.selector &&

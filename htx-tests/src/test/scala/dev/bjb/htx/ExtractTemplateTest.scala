@@ -1,5 +1,7 @@
 package dev.bjb.htx
 
+import cats.Eq
+import cats.implicits.*
 import scala.util.control.NoStackTrace
 
 // htx example.com "[{h1.title}]({@})"
@@ -9,12 +11,20 @@ enum ExtractTemplateError extends NoStackTrace:
   case NoReplacements(template: Template)
   case UnusedExtracts(extractors: Map[String, Extract])
 
+object ExtractTemplateError:
+  given Eq[ExtractTemplateError] = Eq.fromUniversalEquals[ExtractTemplateError]
+
 case class ExtractTemplate private (
-    extractorMap: Map[String, Extract],
+    extractors: Map[String, Extract],
     template: Template,
 )
 case object ExtractTemplate:
   import ExtractTemplateError.*
+
+  given Eq[ExtractTemplate] = Eq.instance { (a, b) =>
+    a.extractors === b.extractors &&
+    a.template === b.template
+  }
 
   lazy val extractRe = raw"\{(.*?)\}".r
   def from(
@@ -25,12 +35,18 @@ case object ExtractTemplate:
     matches = extractRe.findAllMatchIn(tpl).map(m => m.group(1)).toList
     ex <-
       if matches.lengthIs == 0 then Left(NoReplacements(template))
-      else mergeMatches(matches, extractors)
+      else mergeMatches(extractors, matches)
   yield ExtractTemplate(ex, template)
 
-  private def mergeMatches(
-      matches: List[String],
+  def unsafe(
       extractors: Map[String, Extract],
+      template: Template,
+  ): ExtractTemplate =
+    new ExtractTemplate(extractors, template)
+
+  private def mergeMatches(
+      extractors: Map[String, Extract],
+      matches: List[String],
   ): Either[ExtractTemplateError, Map[String, Extract]] = for
     ex <- Right(extractors)
     keys = extractors.keySet
@@ -38,7 +54,7 @@ case object ExtractTemplate:
     _ <-
       if unused.sizeIs == 0 then Right(extractors)
       else Left(UnusedExtracts(ex.view.filterKeys(unused.contains(_)).toMap))
-  yield ???
+  yield matches.map(m => (m, Extract.unsafe(m))).toMap ++ ex
 
 class ExtractTemplateTest extends CommonSuite:
   import ExtractTemplateError.*
@@ -65,4 +81,16 @@ class ExtractTemplateTest extends CommonSuite:
       template = template,
     )
     assertEquals(result, Left(UnusedExtracts(Map(title))))
+  }
+
+  test("template has implicit extractors") {
+    val template = Template("{title} by {author}")
+    val implicitTitle = ("title" -> Extract.unsafe("title"))
+    val author = ("author" -> Extract.unsafe("author"))
+    val result = ExtractTemplate.from(
+      extractors = Map(author),
+      template = template,
+    )
+    val expected = ExtractTemplate.unsafe(Map(author, implicitTitle), template)
+    assert(result === Right(expected), s"got unexpected result: $result")
   }
