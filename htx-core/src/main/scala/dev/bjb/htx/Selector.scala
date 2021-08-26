@@ -23,8 +23,9 @@ object Selector:
   private[htx] def unsafe(query: String): Selector =
     Selector(query, QueryParser.parse(query))
 
-  given Eq[Selector] = Eq.instance { (a, b) => a.source == b.source }
-
+  given Eq[Selector] = Eq.instance { (a, b) =>
+    a.source == b.source
+  }
   given Decoder[Selector] = Decoder[String] flatMap { s =>
     Selector(s) match
       case Left(e)         => Decoder.failedWithMessage(e.getMessage)

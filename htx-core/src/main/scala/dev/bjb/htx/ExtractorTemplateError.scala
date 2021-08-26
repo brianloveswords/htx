@@ -6,6 +6,7 @@ import scala.util.control.NoStackTrace
 
 enum ExtractorTemplateError extends NoStackTrace:
   case NoReplacements(template: Template)
+  case UnfulfilledAutoUri(template: Template)
   case UnusedExtracts(extractors: ExtractorMap)
   case InvalidSelectorFromTemplate(
       template: Template,

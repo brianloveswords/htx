@@ -4,12 +4,26 @@ import cats.Eq
 import cats.implicits.*
 import scala.util.control.NoStackTrace
 import org.http4s.Uri
+import org.http4s.implicits.*
 
 // htx example.com "[{h1.title}]({@})"
 // htx example.com author:"meta[property='twitter:title']" "[{h1.title}]({@})"
 
+enum ReplacementEntry:
+  case AutoUri(uri: Uri)
+  case Standard(extractor: Extractor)
+
+import ReplacementEntry.*
+given Eq[ReplacementEntry] = Eq.instance {
+  case (Standard(a), Standard(b)) => a === b
+  case (AutoUri(a), AutoUri(b))   => a === b
+  case _                          => false
+}
+
+type ExtractorTemplateResult = Either[ExtractorTemplateError, ExtractorTemplate]
+
 case class ExtractorTemplate private (
-    extractors: ExtractorMap,
+    replacements: Map[String, ReplacementEntry],
     template: Template,
     uri: Option[Uri],
 )
@@ -17,7 +31,7 @@ case object ExtractorTemplate:
   import ExtractorTemplateError.*
 
   given Eq[ExtractorTemplate] = Eq.instance { (a, b) =>
-    a.extractors === b.extractors &&
+    a.replacements === b.replacements &&
     a.template === b.template &&
     a.uri === b.uri
   }
@@ -32,37 +46,44 @@ case object ExtractorTemplate:
     matches = extractRe.findAllMatchIn(tpl).map(m => m.group(1)).toList
     ex <-
       if matches.lengthIs == 0 then Left(NoReplacements(template))
-      else mergeMatches(extractors, template, matches)
+      else mergeMatches(extractors, template, matches, uri)
   yield ExtractorTemplate(ex, template, uri)
 
   def unsafe(
-      extractors: ExtractorMap,
+      replacements: Map[String, ReplacementEntry],
       template: Template,
       uri: Option[Uri],
   ): ExtractorTemplate =
-    new ExtractorTemplate(extractors, template, uri)
+    new ExtractorTemplate(replacements, template, uri)
 
-  lazy val emptyExtractorMap =
-    Map.empty[String, Extractor].asRight[ExtractorTemplateError]
+  lazy val emptyReplacementMap =
+    Map.empty[String, ReplacementEntry].asRight[ExtractorTemplateError]
 
   private def mergeMatches(
       extractors: ExtractorMap,
       template: Template,
       matches: List[String],
-  ): Either[ExtractorTemplateError, ExtractorMap] = for
+      uri: Option[Uri],
+  ): Either[ExtractorTemplateError, Map[String, ReplacementEntry]] = for
     ex <- Right(extractors)
     keys = extractors.keySet
     unused = keys.diff(matches.toSet)
-    _ <-
-      if unused.sizeIs == 0 then Right(extractors)
+    replacements <-
+      if unused.sizeIs == 0 then Right(ex.map((k, v) => k -> Standard(v)))
       else Left(UnusedExtracts(ex.view.filterKeys(unused.contains(_)).toMap))
-    auto <- matches.foldLeft(emptyExtractorMap) { (acc, m) =>
+    auto <- matches.foldLeft(emptyReplacementMap) { (acc, m) =>
       acc.flatMap { acc =>
-        Selector(m) match
-          case Left(err) =>
-            Left(InvalidSelectorFromTemplate(template, m, err.getMessage))
-          case Right(sel) =>
-            Right(acc + (m -> Extractor(sel)))
+        m match
+          case "@" =>
+            uri match
+              case Some(u) => Right(acc + ("@" -> AutoUri(u)))
+              case None    => Left(UnfulfilledAutoUri(template))
+          case m =>
+            Selector(m) match
+              case Left(err) =>
+                Left(InvalidSelectorFromTemplate(template, m, err.getMessage))
+              case Right(sel) =>
+                Right(acc + (m -> Standard(Extractor(sel))))
       }
     }
-  yield matches.map(m => (m, Extractor.unsafe(m))).toMap ++ ex
+  yield auto ++ replacements

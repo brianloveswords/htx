@@ -1,9 +1,17 @@
 package dev.bjb.htx
 
 import cats.implicits.*
+import org.http4s.implicits.*
 
 class ExtractorTemplateTest extends CommonSuite:
   import ExtractorTemplateError.*
+  import ReplacementEntry.*
+
+  def extractorToReplacement(
+      extractorEntry: (String, Extractor),
+  ): (String, ReplacementEntry) =
+    extractorEntry match
+      case (key, extractor) => (key, Standard(extractor))
 
   test("no replacements") {
     val template = Template("cool")
@@ -12,7 +20,8 @@ class ExtractorTemplateTest extends CommonSuite:
       template = template,
       uri = None,
     )
-    assertEquals(result, Left(NoReplacements(template)))
+    val expected: ExtractorTemplateResult = Left(NoReplacements(template))
+    assertEq(result, expected)
   }
 
   test("unused extracts") {
@@ -28,7 +37,8 @@ class ExtractorTemplateTest extends CommonSuite:
       template = template,
       uri = None,
     )
-    assertEquals(result, Left(UnusedExtracts(Map(title))))
+    val expected: ExtractorTemplateResult = Left(UnusedExtracts(Map(title)))
+    assertEq(result, expected)
   }
 
   test("template has implicit extractor") {
@@ -41,14 +51,20 @@ class ExtractorTemplateTest extends CommonSuite:
       template = template,
       uri = None,
     )
-    val expected = Right(
+    val expected: ExtractorTemplateResult = Right(
       ExtractorTemplate.unsafe(
-        extractors = Map(author, implicitTitle, implicitDate),
+        replacements = Map(
+          implicitTitle,
+          author,
+          implicitDate,
+        ).map(extractorToReplacement),
         template = template,
         uri = None,
       ),
     )
-    assert(result === expected, s"got unexpected result: $result")
+
+    assertEq(result, expected)
+
   }
 
   test("template has implicit extractor, but it's bad") {
@@ -69,17 +85,18 @@ class ExtractorTemplateTest extends CommonSuite:
   }
 
   test("template has URL autovar") {
-    val template = Template("x{ti~!~tle}x")
+    val template = Template("{@}")
+    val uri = uri"https://example.com"
     val result = ExtractorTemplate.from(
       extractors = Map(),
       template = template,
-      uri = None,
+      uri = Some(uri),
     )
-    val expected = Left(
-      InvalidSelectorFromTemplate(
-        template,
-        "ti~!~tle",
-        "Could not parse query '!': unexpected token at '!'",
+    val expected = Right(
+      ExtractorTemplate.unsafe(
+        replacements = Map("@" -> AutoUri(uri)),
+        template = template,
+        uri = Some(uri),
       ),
     )
     assertEquals(result, expected)
