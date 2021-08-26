@@ -83,14 +83,16 @@ class ExtractTemplateTest extends CommonSuite:
     assertEquals(result, Left(UnusedExtracts(Map(title))))
   }
 
-  test("template has implicit extractors") {
-    val template = Template("{title} by {author}")
+  test("template has implicit extractor") {
+    val template = Template("{title} by {author} on {date}")
     val implicitTitle = ("title" -> Extract.unsafe("title"))
+    val implicitDate = ("date" -> Extract.unsafe("date"))
     val author = ("author" -> Extract.unsafe("author"))
     val result = ExtractTemplate.from(
       extractors = Map(author),
       template = template,
     )
-    val expected = ExtractTemplate.unsafe(Map(author, implicitTitle), template)
+    val expected =
+      ExtractTemplate.unsafe(Map(author, implicitTitle, implicitDate), template)
     assert(result === Right(expected), s"got unexpected result: $result")
   }
