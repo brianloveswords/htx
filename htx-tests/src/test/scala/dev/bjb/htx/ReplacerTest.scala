@@ -58,7 +58,6 @@ class ReplacerTest extends CommonSuite:
     )
 
     assertEq(result, expected)
-
   }
 
   test("template has implicit extractor, but it's bad") {
