@@ -1,6 +1,10 @@
+import scala.util.control.NonFatal
+import scala.collection.mutable.ArrayBuilder
 import java.io.File
 import sbtassembly.AssemblyKeys
 import scala.sys.process._
+import org.antlr.v4.{Tool => Antlr4}
+import java.nio.file.Paths
 
 val scalaVer = "3.0.1"
 
@@ -59,9 +63,47 @@ inThisBuild(
 
 name := "htxRoot"
 
+val runAntlr4 = taskKey[Unit](
+  "Run antlr4 on some grammars",
+)
+
+lazy val grammars = project
+  .in(file("grammars"))
+  .settings(
+    moduleName := "grammars",
+    runAntlr4 := {
+      val pkg = "dev.bjb.htx.grammar"
+      val outPath = Paths
+        .get("grammars", "src", "main", "java")
+        .toAbsolutePath
+        .toString
+      val inPath = Paths
+        .get("grammars", "src", "main", "resources", "Expr.g4")
+        .toAbsolutePath
+        .toString
+
+      val options = Array(
+        "-Xexact-output-dir",
+        "-o",
+        outPath,
+        "-package",
+        pkg,
+        "-visitor",
+        inPath,
+      )
+
+      streams.value.log.info(s"Running Antlr4 with options: ${options.toList}")
+      val antlr = new Antlr4(options)
+      antlr.processGrammarsOnCommandLine()
+    },
+    libraryDependencies += "org.antlr" % "antlr4-runtime" % "4.9.2",
+    Compile / compile := (Compile / compile).dependsOn(runAntlr4).value,
+  )
+
 lazy val core = project
   .in(file("htx-core"))
   .enablePlugins(JavaAppPackaging, UniversalPlugin)
+  .dependsOn(grammars)
   .settings(
     moduleName := "htx-core",
   )
