@@ -42,6 +42,9 @@ case object ExtractorTemplate:
   ): ExtractorTemplate =
     new ExtractorTemplate(extractors, template, uri)
 
+  lazy val emptyExtractorMap =
+    Map.empty[String, Extractor].asRight[ExtractorTemplateError]
+
   private def mergeMatches(
       extractors: ExtractorMap,
       template: Template,
@@ -53,8 +56,7 @@ case object ExtractorTemplate:
     _ <-
       if unused.sizeIs == 0 then Right(extractors)
       else Left(UnusedExtracts(ex.view.filterKeys(unused.contains(_)).toMap))
-    empty = Map.empty[String, Extractor].asRight[ExtractorTemplateError]
-    auto <- matches.foldLeft(empty) { (acc, m) =>
+    auto <- matches.foldLeft(emptyExtractorMap) { (acc, m) =>
       acc.flatMap { acc =>
         Selector(m) match
           case Left(err) =>
