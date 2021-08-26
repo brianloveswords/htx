@@ -18,7 +18,7 @@ class ConfigEntryTest extends RoundTripSuite[ConfigEntry]:
     |    "betterprogramming.pub",
     |    "levelup.gitconnected.com"
     |  ],
-    |  "extract": {
+    |  "extractors": {
     |    "title": {
     |      "selector": "meta[property='twitter:title']",
     |      "attribute": "content"

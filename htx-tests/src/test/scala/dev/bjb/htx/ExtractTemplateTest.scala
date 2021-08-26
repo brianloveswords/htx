@@ -7,47 +7,48 @@ import scala.util.control.NoStackTrace
 // htx example.com "[{h1.title}]({@})"
 // htx example.com author:"meta[property='twitter:title']" "[{h1.title}]({@})"
 
-enum ExtractTemplateError extends NoStackTrace:
+enum ExtractorTemplateError extends NoStackTrace:
   case NoReplacements(template: Template)
-  case UnusedExtracts(extractors: Map[String, Extractor])
+  case UnusedExtracts(extractors: ExtractorMap)
 
-object ExtractTemplateError:
-  given Eq[ExtractTemplateError] = Eq.fromUniversalEquals[ExtractTemplateError]
+object ExtractorTemplateError:
+  given Eq[ExtractorTemplateError] =
+    Eq.fromUniversalEquals[ExtractorTemplateError]
 
-case class ExtractTemplate private (
-    extractors: Map[String, Extractor],
+case class ExtractorTemplate private (
+    extractors: ExtractorMap,
     template: Template,
 )
-case object ExtractTemplate:
-  import ExtractTemplateError.*
+case object ExtractorTemplate:
+  import ExtractorTemplateError.*
 
-  given Eq[ExtractTemplate] = Eq.instance { (a, b) =>
+  given Eq[ExtractorTemplate] = Eq.instance { (a, b) =>
     a.extractors === b.extractors &&
     a.template === b.template
   }
 
   lazy val extractRe = raw"\{(.*?)\}".r
   def from(
-      extractors: Map[String, Extractor],
+      extractors: ExtractorMap,
       template: Template,
-  ): Either[ExtractTemplateError, ExtractTemplate] = for
+  ): Either[ExtractorTemplateError, ExtractorTemplate] = for
     tpl <- Right(template.value)
     matches = extractRe.findAllMatchIn(tpl).map(m => m.group(1)).toList
     ex <-
       if matches.lengthIs == 0 then Left(NoReplacements(template))
       else mergeMatches(extractors, matches)
-  yield ExtractTemplate(ex, template)
+  yield ExtractorTemplate(ex, template)
 
   def unsafe(
-      extractors: Map[String, Extractor],
+      extractors: ExtractorMap,
       template: Template,
-  ): ExtractTemplate =
-    new ExtractTemplate(extractors, template)
+  ): ExtractorTemplate =
+    new ExtractorTemplate(extractors, template)
 
   private def mergeMatches(
-      extractors: Map[String, Extractor],
+      extractors: ExtractorMap,
       matches: List[String],
-  ): Either[ExtractTemplateError, Map[String, Extractor]] = for
+  ): Either[ExtractorTemplateError, ExtractorMap] = for
     ex <- Right(extractors)
     keys = extractors.keySet
     unused = keys.diff(matches.toSet)
@@ -57,11 +58,11 @@ case object ExtractTemplate:
   yield matches.map(m => (m, Extractor.unsafe(m))).toMap ++ ex
 
 class ExtractTemplateTest extends CommonSuite:
-  import ExtractTemplateError.*
+  import ExtractorTemplateError.*
 
   test("no replacements") {
     val template = Template("cool")
-    val result = ExtractTemplate.from(
+    val result = ExtractorTemplate.from(
       extractors = Map(),
       template = template,
     )
@@ -76,7 +77,7 @@ class ExtractTemplateTest extends CommonSuite:
       Some("content"),
       Some("Unknown Author"),
     ))
-    val result = ExtractTemplate.from(
+    val result = ExtractorTemplate.from(
       extractors = Map(title, author),
       template = template,
     )
@@ -88,11 +89,14 @@ class ExtractTemplateTest extends CommonSuite:
     val implicitTitle = ("title" -> Extractor.unsafe("title"))
     val implicitDate = ("date" -> Extractor.unsafe("date"))
     val author = ("author" -> Extractor.unsafe("author"))
-    val result = ExtractTemplate.from(
+    val result = ExtractorTemplate.from(
       extractors = Map(author),
       template = template,
     )
     val expected =
-      ExtractTemplate.unsafe(Map(author, implicitTitle, implicitDate), template)
+      ExtractorTemplate.unsafe(
+        Map(author, implicitTitle, implicitDate),
+        template,
+      )
     assert(result === Right(expected), s"got unexpected result: $result")
   }
