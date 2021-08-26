@@ -22,7 +22,7 @@ case object ExtractTemplate:
       template: Template,
   ): Either[ExtractTemplateError, ExtractTemplate] = for
     tpl <- Right(template.value)
-    matches <- Right(extractRe.findAllMatchIn(tpl).map(m => m.group(1)).toList)
+    matches = extractRe.findAllMatchIn(tpl).map(m => m.group(1)).toList
     ex <-
       if matches.lengthIs == 0 then Left(NoReplacements(template))
       else mergeMatches(matches, extractors)
