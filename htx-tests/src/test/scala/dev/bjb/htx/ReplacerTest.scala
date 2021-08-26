@@ -7,12 +7,6 @@ class ReplacerTest extends CommonSuite:
   import ReplacerError.*
   import ReplaceUnit.*
 
-  def extractorToReplacement(
-      extractorEntry: (String, Extractor),
-  ): (String, ReplaceUnit) =
-    extractorEntry match
-      case (key, extractor) => (key, Standard(extractor))
-
   test("no replacements") {
     val template = Template("cool")
     val result = Replacer.from(
@@ -43,8 +37,8 @@ class ReplacerTest extends CommonSuite:
 
   test("template has implicit extractor") {
     val template = Template("{title} by {author} on {date}")
-    val implicitTitle = ("title" -> Extractor.unsafe("title"))
-    val implicitDate = ("date" -> Extractor.unsafe("date"))
+    val title = ("title" -> Extractor.unsafe("title"))
+    val date = ("date" -> Extractor.unsafe("date"))
     val author = ("author" -> Extractor.unsafe("author"))
     val result = Replacer.from(
       extractors = Map(author),
@@ -54,10 +48,10 @@ class ReplacerTest extends CommonSuite:
     val expected: ReplacerResult = Right(
       Replacer.unsafe(
         replacements = Map(
-          implicitTitle,
-          author,
-          implicitDate,
-        ).map(extractorToReplacement),
+          title.toReplaceMapEntry(Offset(0, 7)),
+          author.toReplaceMapEntry(Offset(11, 19)),
+          date.toReplaceMapEntry(Offset(23, 29)),
+        ),
         template = template,
         uri = None,
       ),
@@ -74,14 +68,14 @@ class ReplacerTest extends CommonSuite:
       template = template,
       uri = None,
     )
-    val expected = Left(
+    val expected: ReplacerResult = Left(
       InvalidSelectorFromTemplate(
         template,
         "ti~!~tle",
         "Could not parse query '!': unexpected token at '!'",
       ),
     )
-    assertEquals(result, expected)
+    assertEq(result, expected)
   }
 
   test("template has URL autovar") {
@@ -92,12 +86,23 @@ class ReplacerTest extends CommonSuite:
       template = template,
       uri = Some(uri),
     )
-    val expected = Right(
+    val expected: ReplacerResult = Right(
       Replacer.unsafe(
-        replacements = Map("@" -> AutoUri(uri)),
+        replacements = Map("@" -> AutoUri(Offset(0, 3), uri)),
         template = template,
         uri = Some(uri),
       ),
     )
-    assertEquals(result, expected)
+    assertEq(result, expected)
   }
+
+// test("replacer did not find anything and didn't have fallbacks") {
+//   val template = Template("{title}")
+//   val soup = PureSoup("<title>ok</title>")
+//   val Right(replacer) = Replacer.from(
+//     extractors = Map(),
+//     template = template,
+//     uri = None,
+//   )
+//   assertEq(replacer(soup), none[String])
+// }
