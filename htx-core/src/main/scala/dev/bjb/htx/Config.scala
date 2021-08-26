@@ -6,12 +6,12 @@ import io.circe.generic.auto.*
 import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
 
-type ExtractMap = Map[String, Extractor]
 type Config = Seq[ConfigEntry]
+type ExtractorMap = Map[String, Extractor]
 
 case class ConfigEntry(
     url: Matcher,
-    extract: ExtractMap,
+    extract: ExtractorMap,
     template: Template,
 )
 
@@ -24,14 +24,14 @@ object ConfigEntry:
     (m1, e1, t1) === (m2, e2, t2)
   }
 
-  given Arbitrary[ExtractMap] = Arbitrary {
+  given Arbitrary[ExtractorMap] = Arbitrary {
     Gen.mapOf(Gen.zip(Gen.alphaStr, arbitrary[Extractor]))
   }
 
   given Arbitrary[ConfigEntry] = Arbitrary {
     for
       matcher <- arbitrary[Matcher]
-      extractors <- arbitrary[ExtractMap]
+      extractors <- arbitrary[ExtractorMap]
       template <- arbitrary[Template]
     yield ConfigEntry(matcher, extractors, template)
   }
