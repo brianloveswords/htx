@@ -10,6 +10,11 @@ import scala.util.control.NoStackTrace
 enum ExtractorTemplateError extends NoStackTrace:
   case NoReplacements(template: Template)
   case UnusedExtracts(extractors: ExtractorMap)
+  case InvalidSelectorFromTemplate(
+      template: Template,
+      selector: String,
+      reason: String,
+  )
 
 object ExtractorTemplateError:
   given Eq[ExtractorTemplateError] =
@@ -36,7 +41,7 @@ case object ExtractorTemplate:
     matches = extractRe.findAllMatchIn(tpl).map(m => m.group(1)).toList
     ex <-
       if matches.lengthIs == 0 then Left(NoReplacements(template))
-      else mergeMatches(extractors, matches)
+      else mergeMatches(extractors, template, matches)
   yield ExtractorTemplate(ex, template)
 
   def unsafe(
@@ -47,6 +52,7 @@ case object ExtractorTemplate:
 
   private def mergeMatches(
       extractors: ExtractorMap,
+      template: Template,
       matches: List[String],
   ): Either[ExtractorTemplateError, ExtractorMap] = for
     ex <- Right(extractors)
@@ -55,4 +61,14 @@ case object ExtractorTemplate:
     _ <-
       if unused.sizeIs == 0 then Right(extractors)
       else Left(UnusedExtracts(ex.view.filterKeys(unused.contains(_)).toMap))
+    empty = Map.empty[String, Extractor].asRight[ExtractorTemplateError]
+    auto <- matches.foldLeft(empty) { (acc, m) =>
+      acc.flatMap { acc =>
+        Selector(m) match
+          case Left(err) =>
+            Left(InvalidSelectorFromTemplate(template, m, err.getMessage))
+          case Right(sel) =>
+            Right(acc + (m -> Extractor(sel)))
+      }
+    }
   yield matches.map(m => (m, Extractor.unsafe(m))).toMap ++ ex

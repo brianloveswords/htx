@@ -38,10 +38,27 @@ class ExtractorTemplateTest extends CommonSuite:
       extractors = Map(author),
       template = template,
     )
-    val expected =
+    val expected = Right(
       ExtractorTemplate.unsafe(
         Map(author, implicitTitle, implicitDate),
         template,
-      )
-    assert(result === Right(expected), s"got unexpected result: $result")
+      ),
+    )
+    assert(result === expected, s"got unexpected result: $result")
+  }
+
+  test("template has implicit extractor, but it's bad") {
+    val template = Template("x{ti~!~tle}x")
+    val result = ExtractorTemplate.from(
+      extractors = Map(),
+      template = template,
+    )
+    val expected = Left(
+      InvalidSelectorFromTemplate(
+        template,
+        "ti~!~tle",
+        "Could not parse query '!': unexpected token at '!'",
+      ),
+    )
+    assertEquals(result, expected)
   }
