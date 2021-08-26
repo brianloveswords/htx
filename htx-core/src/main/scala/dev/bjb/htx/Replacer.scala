@@ -40,7 +40,7 @@ case class Replacer private (
     uri: Option[Uri],
 ):
   def apply(soup: PureSoup): Option[String] =
-    ???
+    None
 
 case object Replacer:
   import ReplacerError.*

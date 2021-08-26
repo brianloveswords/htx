@@ -96,13 +96,13 @@ class ReplacerTest extends CommonSuite:
     assertEq(result, expected)
   }
 
-// test("replacer did not find anything and didn't have fallbacks") {
-//   val template = Template("{title}")
-//   val soup = PureSoup("<title>ok</title>")
-//   val Right(replacer) = Replacer.from(
-//     extractors = Map(),
-//     template = template,
-//     uri = None,
-//   )
-//   assertEq(replacer(soup), none[String])
-// }
+  test("replacer did not find anything and didn't have fallbacks") {
+    val template = Template("{title}")
+    val soup = PureSoup("<title>ok</title>")
+    val Right(replacer) = Replacer.from(
+      extractors = Map(),
+      template = template,
+      uri = None,
+    )
+    assertEq(replacer(soup), none[String])
+  }
