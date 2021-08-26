@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+ANTLR_JAR="${PWD}/lib/antlr-4.9.2-complete.jar"
+export CLASSPATH=".:$ANTLR_JAR:$CLASSPATH"
+
+java -jar "$ANTLR_JAR" "$@"

@@ -1,6 +1,7 @@
 .metals
 .bloop
 .bsp
+.antlr
 target
 tmp
 bin/*
