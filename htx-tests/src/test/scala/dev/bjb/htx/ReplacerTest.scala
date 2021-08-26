@@ -5,11 +5,11 @@ import org.http4s.implicits.*
 
 class ReplacerTest extends CommonSuite:
   import ReplacerError.*
-  import ReplacerEntry.*
+  import ReplaceUnit.*
 
   def extractorToReplacement(
       extractorEntry: (String, Extractor),
-  ): (String, ReplacerEntry) =
+  ): (String, ReplaceUnit) =
     extractorEntry match
       case (key, extractor) => (key, Standard(extractor))
 
