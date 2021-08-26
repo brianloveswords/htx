@@ -30,9 +30,6 @@ lazy val upxPath = settingKey[String](
 lazy val nativeImageCompressed = taskKey[Unit](
   "Build and compress the native image",
 )
-lazy val debugTask = taskKey[Unit](
-  "Debug task to just test things out",
-)
 
 inThisBuild(
   List(
@@ -128,11 +125,6 @@ lazy val grammar = project
         runAntlr(inPath, outPath)
         runAntlr(inPath, outPath / "nopkg", withPkg = false)
       }
-    },
-    debugTask := {
-      streams.value.log.info(
-        "what's baseDirectory? " + (baseDirectory.value / "other" / "place"),
-      )
     },
   )
 
