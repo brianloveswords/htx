@@ -10,12 +10,12 @@ import scala.util.control.NoStackTrace
 // htx example.com "[{h1.title}]({@})"
 // htx example.com author:"meta[property='twitter:title']" "[{h1.title}]({@})"
 
-enum ReplacementEntry:
+enum ReplacerEntry:
   case AutoUri(uri: Uri)
   case Standard(extractor: Extractor)
 
-import ReplacementEntry.*
-given Eq[ReplacementEntry] = Eq.instance {
+import ReplacerEntry.*
+given Eq[ReplacerEntry] = Eq.instance {
   case (Standard(a), Standard(b)) => a === b
   case (AutoUri(a), AutoUri(b))   => a === b
   case _                          => false
@@ -24,7 +24,7 @@ given Eq[ReplacementEntry] = Eq.instance {
 type ExtractorTemplateResult = Either[ExtractorTemplateError, ExtractorTemplate]
 
 case class ExtractorTemplate private (
-    replacements: Map[String, ReplacementEntry],
+    replacements: Map[String, ReplacerEntry],
     template: Template,
     uri: Option[Uri],
 )
@@ -51,21 +51,21 @@ case object ExtractorTemplate:
   yield ExtractorTemplate(ex, template, uri)
 
   def unsafe(
-      replacements: Map[String, ReplacementEntry],
+      replacements: Map[String, ReplacerEntry],
       template: Template,
       uri: Option[Uri],
   ): ExtractorTemplate =
     new ExtractorTemplate(replacements, template, uri)
 
   lazy val emptyReplacementMap =
-    Map.empty[String, ReplacementEntry].asRight[ExtractorTemplateError]
+    Map.empty[String, ReplacerEntry].asRight[ExtractorTemplateError]
 
   private def mergeMatches(
       extractors: ExtractorMap,
       template: Template,
       matches: List[String],
       uri: Option[Uri],
-  ): Either[ExtractorTemplateError, Map[String, ReplacementEntry]] = for
+  ): Either[ExtractorTemplateError, Map[String, ReplacerEntry]] = for
     ex <- Right(extractors)
     keys = extractors.keySet
     unused = keys.diff(matches.toSet)
