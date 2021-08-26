@@ -3,8 +3,8 @@ package dev.bjb.htx
 import cats.implicits.*
 import org.http4s.implicits.*
 
-class ExtractorTemplateTest extends CommonSuite:
-  import ExtractorTemplateError.*
+class ReplacerTest extends CommonSuite:
+  import ReplacerError.*
   import ReplacerEntry.*
 
   def extractorToReplacement(
@@ -15,12 +15,12 @@ class ExtractorTemplateTest extends CommonSuite:
 
   test("no replacements") {
     val template = Template("cool")
-    val result = ExtractorTemplate.from(
+    val result = Replacer.from(
       extractors = Map(),
       template = template,
       uri = None,
     )
-    val expected: ExtractorTemplateResult = Left(NoReplacements(template))
+    val expected: ReplacerResult = Left(NoReplacements(template))
     assertEq(result, expected)
   }
 
@@ -32,12 +32,12 @@ class ExtractorTemplateTest extends CommonSuite:
       Some("content"),
       Some("Unknown Author"),
     ))
-    val result = ExtractorTemplate.from(
+    val result = Replacer.from(
       extractors = Map(title, author),
       template = template,
       uri = None,
     )
-    val expected: ExtractorTemplateResult = Left(UnusedExtracts(Map(title)))
+    val expected: ReplacerResult = Left(UnusedExtracts(Map(title)))
     assertEq(result, expected)
   }
 
@@ -46,13 +46,13 @@ class ExtractorTemplateTest extends CommonSuite:
     val implicitTitle = ("title" -> Extractor.unsafe("title"))
     val implicitDate = ("date" -> Extractor.unsafe("date"))
     val author = ("author" -> Extractor.unsafe("author"))
-    val result = ExtractorTemplate.from(
+    val result = Replacer.from(
       extractors = Map(author),
       template = template,
       uri = None,
     )
-    val expected: ExtractorTemplateResult = Right(
-      ExtractorTemplate.unsafe(
+    val expected: ReplacerResult = Right(
+      Replacer.unsafe(
         replacements = Map(
           implicitTitle,
           author,
@@ -69,7 +69,7 @@ class ExtractorTemplateTest extends CommonSuite:
 
   test("template has implicit extractor, but it's bad") {
     val template = Template("x{ti~!~tle}x")
-    val result = ExtractorTemplate.from(
+    val result = Replacer.from(
       extractors = Map(),
       template = template,
       uri = None,
@@ -87,13 +87,13 @@ class ExtractorTemplateTest extends CommonSuite:
   test("template has URL autovar") {
     val template = Template("{@}")
     val uri = uri"https://example.com"
-    val result = ExtractorTemplate.from(
+    val result = Replacer.from(
       extractors = Map(),
       template = template,
       uri = Some(uri),
     )
     val expected = Right(
-      ExtractorTemplate.unsafe(
+      Replacer.unsafe(
         replacements = Map("@" -> AutoUri(uri)),
         template = template,
         uri = Some(uri),

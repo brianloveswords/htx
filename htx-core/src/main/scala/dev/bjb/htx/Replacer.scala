@@ -21,17 +21,17 @@ given Eq[ReplacerEntry] = Eq.instance {
   case _                          => false
 }
 
-type ExtractorTemplateResult = Either[ExtractorTemplateError, ExtractorTemplate]
+type ReplacerResult = Either[ReplacerError, Replacer]
 
-case class ExtractorTemplate private (
+case class Replacer private (
     replacements: Map[String, ReplacerEntry],
     template: Template,
     uri: Option[Uri],
 )
-case object ExtractorTemplate:
-  import ExtractorTemplateError.*
+case object Replacer:
+  import ReplacerError.*
 
-  given Eq[ExtractorTemplate] = Eq.instance { (a, b) =>
+  given Eq[Replacer] = Eq.instance { (a, b) =>
     a.replacements === b.replacements &&
     a.template === b.template &&
     a.uri === b.uri
@@ -42,30 +42,30 @@ case object ExtractorTemplate:
       extractors: ExtractorMap,
       template: Template,
       uri: Option[Uri],
-  ): Either[ExtractorTemplateError, ExtractorTemplate] = for
+  ): Either[ReplacerError, Replacer] = for
     tpl <- Right(template.value)
     matches = extractRe.findAllMatchIn(tpl).map(m => m.group(1)).toList
     ex <-
       if matches.lengthIs == 0 then Left(NoReplacements(template))
       else mergeMatches(extractors, template, matches, uri)
-  yield ExtractorTemplate(ex, template, uri)
+  yield Replacer(ex, template, uri)
 
   def unsafe(
       replacements: Map[String, ReplacerEntry],
       template: Template,
       uri: Option[Uri],
-  ): ExtractorTemplate =
-    new ExtractorTemplate(replacements, template, uri)
+  ): Replacer =
+    new Replacer(replacements, template, uri)
 
   lazy val emptyReplacementMap =
-    Map.empty[String, ReplacerEntry].asRight[ExtractorTemplateError]
+    Map.empty[String, ReplacerEntry].asRight[ReplacerError]
 
   private def mergeMatches(
       extractors: ExtractorMap,
       template: Template,
       matches: List[String],
       uri: Option[Uri],
-  ): Either[ExtractorTemplateError, Map[String, ReplacerEntry]] = for
+  ): Either[ReplacerError, Map[String, ReplacerEntry]] = for
     ex <- Right(extractors)
     keys = extractors.keySet
     unused = keys.diff(matches.toSet)

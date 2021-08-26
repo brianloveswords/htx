@@ -4,7 +4,7 @@ import cats.Eq
 import cats.implicits.*
 import scala.util.control.NoStackTrace
 
-enum ExtractorTemplateError extends NoStackTrace:
+enum ReplacerError extends NoStackTrace:
   case NoReplacements(template: Template)
   case UnfulfilledAutoUri(template: Template)
   case UnusedExtracts(extractors: ExtractorMap)
@@ -14,6 +14,6 @@ enum ExtractorTemplateError extends NoStackTrace:
       reason: String,
   )
 
-object ExtractorTemplateError:
-  given Eq[ExtractorTemplateError] =
-    Eq.fromUniversalEquals[ExtractorTemplateError]
+object ReplacerError:
+  given Eq[ReplacerError] =
+    Eq.fromUniversalEquals[ReplacerError]
