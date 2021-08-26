@@ -10,6 +10,7 @@ class ExtractorTemplateTest extends CommonSuite:
     val result = ExtractorTemplate.from(
       extractors = Map(),
       template = template,
+      uri = None,
     )
     assertEquals(result, Left(NoReplacements(template)))
   }
@@ -25,6 +26,7 @@ class ExtractorTemplateTest extends CommonSuite:
     val result = ExtractorTemplate.from(
       extractors = Map(title, author),
       template = template,
+      uri = None,
     )
     assertEquals(result, Left(UnusedExtracts(Map(title))))
   }
@@ -37,11 +39,13 @@ class ExtractorTemplateTest extends CommonSuite:
     val result = ExtractorTemplate.from(
       extractors = Map(author),
       template = template,
+      uri = None,
     )
     val expected = Right(
       ExtractorTemplate.unsafe(
-        Map(author, implicitTitle, implicitDate),
-        template,
+        extractors = Map(author, implicitTitle, implicitDate),
+        template = template,
+        uri = None,
       ),
     )
     assert(result === expected, s"got unexpected result: $result")
@@ -52,6 +56,24 @@ class ExtractorTemplateTest extends CommonSuite:
     val result = ExtractorTemplate.from(
       extractors = Map(),
       template = template,
+      uri = None,
+    )
+    val expected = Left(
+      InvalidSelectorFromTemplate(
+        template,
+        "ti~!~tle",
+        "Could not parse query '!': unexpected token at '!'",
+      ),
+    )
+    assertEquals(result, expected)
+  }
+
+  test("template has URL autovar") {
+    val template = Template("x{ti~!~tle}x")
+    val result = ExtractorTemplate.from(
+      extractors = Map(),
+      template = template,
+      uri = None,
     )
     val expected = Left(
       InvalidSelectorFromTemplate(

@@ -3,52 +3,44 @@ package dev.bjb.htx
 import cats.Eq
 import cats.implicits.*
 import scala.util.control.NoStackTrace
+import org.http4s.Uri
 
 // htx example.com "[{h1.title}]({@})"
 // htx example.com author:"meta[property='twitter:title']" "[{h1.title}]({@})"
 
-enum ExtractorTemplateError extends NoStackTrace:
-  case NoReplacements(template: Template)
-  case UnusedExtracts(extractors: ExtractorMap)
-  case InvalidSelectorFromTemplate(
-      template: Template,
-      selector: String,
-      reason: String,
-  )
-
-object ExtractorTemplateError:
-  given Eq[ExtractorTemplateError] =
-    Eq.fromUniversalEquals[ExtractorTemplateError]
-
 case class ExtractorTemplate private (
     extractors: ExtractorMap,
     template: Template,
+    uri: Option[Uri],
 )
 case object ExtractorTemplate:
   import ExtractorTemplateError.*
 
   given Eq[ExtractorTemplate] = Eq.instance { (a, b) =>
     a.extractors === b.extractors &&
-    a.template === b.template
+    a.template === b.template &&
+    a.uri === b.uri
   }
 
   lazy val extractRe = raw"\{(.*?)\}".r
   def from(
       extractors: ExtractorMap,
       template: Template,
+      uri: Option[Uri],
   ): Either[ExtractorTemplateError, ExtractorTemplate] = for
     tpl <- Right(template.value)
     matches = extractRe.findAllMatchIn(tpl).map(m => m.group(1)).toList
     ex <-
       if matches.lengthIs == 0 then Left(NoReplacements(template))
       else mergeMatches(extractors, template, matches)
-  yield ExtractorTemplate(ex, template)
+  yield ExtractorTemplate(ex, template, uri)
 
   def unsafe(
       extractors: ExtractorMap,
       template: Template,
+      uri: Option[Uri],
   ): ExtractorTemplate =
-    new ExtractorTemplate(extractors, template)
+    new ExtractorTemplate(extractors, template, uri)
 
   private def mergeMatches(
       extractors: ExtractorMap,
