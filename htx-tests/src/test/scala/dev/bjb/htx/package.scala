@@ -17,6 +17,8 @@ import munit.internal.difflib.Diffs
 import munit.internal.difflib.ComparisonFailExceptionHandler
 
 trait CommonSuite extends CatsEffectSuite with ScalaCheckEffectSuite:
+  // NOTE(brianloveswords): stolen form munit innards so I could override
+  // equality operator with Eq.eqv
   private def munitComparisonHandler(
       actualObtained: Any,
       actualExpected: Any,

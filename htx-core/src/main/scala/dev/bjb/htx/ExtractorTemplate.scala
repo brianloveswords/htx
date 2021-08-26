@@ -2,9 +2,10 @@ package dev.bjb.htx
 
 import cats.Eq
 import cats.implicits.*
-import scala.util.control.NoStackTrace
 import org.http4s.Uri
 import org.http4s.implicits.*
+
+import scala.util.control.NoStackTrace
 
 // htx example.com "[{h1.title}]({@})"
 // htx example.com author:"meta[property='twitter:title']" "[{h1.title}]({@})"
