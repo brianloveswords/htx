@@ -30,6 +30,9 @@ lazy val upxPath = settingKey[String](
 lazy val nativeImageCompressed = taskKey[Unit](
   "Build and compress the native image",
 )
+lazy val debugTask = taskKey[Unit](
+  "Debug task to just test things out",
+)
 
 inThisBuild(
   List(
@@ -65,54 +68,72 @@ inThisBuild(
 
 name := "htxRoot"
 
-val runAntlr4 = taskKey[Unit](
+val antlrRun = taskKey[Unit](
   "Run antlr4 on some grammars",
+)
+val antlrClean = taskKey[Unit](
+  "Clean generated antlr4 files",
+)
+val antlrOutputDir = settingKey[File](
+  "Where to stick the java files after they are generated",
+)
+val antlrGrammars = settingKey[Seq[String]](
+  "List of grammars to compile",
 )
 
 lazy val grammar = project
   .in(file("htx-grammar"))
   .settings(
     moduleName := "htx-grammar",
-    runAntlr4 := {
-      // TODO: figure out how to tell sbt to cache this?
+    antlrOutputDir := baseDirectory.value / "src" / "main" / "java",
+    antlrGrammars := Seq("Template.g4"),
+    cleanFiles += antlrOutputDir.value,
+    Compile / compile := (Compile / compile).dependsOn(antlrRun).value,
+    antlrRun := {
+      clean.value
+
+      // TODO: figure out how to tell sbt to cache when grammars haven't changed?
       val pkg = "dev.bjb.htx.grammar"
-      val outPath = Paths
-        .get("htx-grammar", "src", "main", "java")
-        .toAbsolutePath
-        .toString
-      val inPath = Paths
-        .get("htx-grammar", "src", "main", "resources", "Expr.g4")
-        .toAbsolutePath
-        .toString
+      val log = streams.value.log
+      def mkArgs(
+          inFile: File,
+          outDir: File,
+          withPkg: Boolean = true,
+      ): Array[String] = {
+        val baseArgs = Array("-Xexact-output-dir", "-visitor")
+        val pkgArgs = if (withPkg) Array("-package", pkg) else Array[String]()
+        val outArgs = Array("-o", outDir.toString)
+        val inArg = Array(inFile.toString)
+        baseArgs ++ pkgArgs ++ outArgs ++ inArg
+      }
 
-      val options = Array(
-        "-Xexact-output-dir",
-        "-o",
-        outPath,
-        "-package",
-        pkg,
-        "-visitor",
-        inPath,
-      )
-      streams.value.log.info(s"Running Antlr4 with options: ${options.toList}")
-      val antlr = new Antlr4(options)
-      antlr.processGrammarsOnCommandLine()
+      def runAntlr(
+          inFile: File,
+          outDir: File,
+          withPkg: Boolean = true,
+      ): Unit = {
+        val args = mkArgs(inFile, outDir, withPkg)
+        log.info(s"Running Antlr4 with options: ${args.toList}")
+        val antlr = new Antlr4(args)
+        antlr.processGrammarsOnCommandLine()
+        if (antlr.getNumErrors() > 0)
+          throw new MessageOnlyException(s"Antlr4 Failed")
+      }
 
-      // We also need a version that doesn't have a package because `grun`
-      // doesn't work with packages
-      val optionsNoPkg = Array(
-        "-Xexact-output-dir",
-        "-o",
-        Paths.get(outPath, "nopkg").toString,
-        "-visitor",
-        inPath,
-      )
-      streams.value.log
-        .info(s"Running Antlr4 with options: ${optionsNoPkg.toList}")
-      val antlrNoPkg = new Antlr4(optionsNoPkg)
-      antlrNoPkg.processGrammarsOnCommandLine()
+      antlrGrammars.value.foreach { grammar =>
+        val inPath =
+          baseDirectory.value / "src" / "main" / "resources" / s"$grammar"
+        val outPath = antlrOutputDir.value
+
+        runAntlr(inPath, outPath)
+        runAntlr(inPath, outPath / "nopkg", withPkg = false)
+      }
     },
-    Compile / compile := (Compile / compile).dependsOn(runAntlr4).value,
+    debugTask := {
+      streams.value.log.info(
+        "what's baseDirectory? " + (baseDirectory.value / "other" / "place"),
+      )
+    },
   )
 
 lazy val core = project

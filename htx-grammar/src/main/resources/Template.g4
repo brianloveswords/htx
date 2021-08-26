@@ -1,4 +1,4 @@
-grammar Expr;
+grammar Template;
 prog: (expr NEWLINE)*;
 expr:
 	expr ('*' | '/') expr
