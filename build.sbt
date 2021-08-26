@@ -17,6 +17,7 @@ val v = new {
   val circe = "0.14.1"
   val scalaCheckEffect = "1.0.2"
   val munitCatsEffect = "1.0.3"
+  val antlr4 = "4.9.2"
 }
 
 lazy val operatingSystem = settingKey[OS](
@@ -49,6 +50,7 @@ inThisBuild(
       "io.circe" %% "circe-parser" % v.circe,
       "io.circe" %% "circe-testing" % v.circe,
       "io.circe" %% "circe-yaml" % v.circe,
+      "org.antlr" % "antlr4-runtime" % v.antlr4,
     ),
     libraryDependencies ++= Seq(
       "org.typelevel" %% "munit-cats-effect-3" % v.munitCatsEffect,
@@ -67,18 +69,19 @@ val runAntlr4 = taskKey[Unit](
   "Run antlr4 on some grammars",
 )
 
-lazy val grammars = project
-  .in(file("grammars"))
+lazy val grammar = project
+  .in(file("htx-grammar"))
   .settings(
-    moduleName := "grammars",
+    moduleName := "htx-grammar",
     runAntlr4 := {
+      // TODO: figure out how to tell sbt to cache this?
       val pkg = "dev.bjb.htx.grammar"
       val outPath = Paths
-        .get("grammars", "src", "main", "java")
+        .get("htx-grammar", "src", "main", "java")
         .toAbsolutePath
         .toString
       val inPath = Paths
-        .get("grammars", "src", "main", "resources", "Expr.g4")
+        .get("htx-grammar", "src", "main", "resources", "Expr.g4")
         .toAbsolutePath
         .toString
 
@@ -109,14 +112,13 @@ lazy val grammars = project
       val antlrNoPkg = new Antlr4(optionsNoPkg)
       antlrNoPkg.processGrammarsOnCommandLine()
     },
-    libraryDependencies += "org.antlr" % "antlr4-runtime" % "4.9.2",
     Compile / compile := (Compile / compile).dependsOn(runAntlr4).value,
   )
 
 lazy val core = project
   .in(file("htx-core"))
   .enablePlugins(JavaAppPackaging, UniversalPlugin)
-  .dependsOn(grammars)
+  .dependsOn(grammar)
   .settings(
     moduleName := "htx-core",
   )
