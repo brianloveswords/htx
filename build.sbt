@@ -191,6 +191,7 @@ lazy val cli = project
     },
     operatingSystem := OS.get,
     upxPath := {
+      // TODO: rewrite all this in terms of `File` and the `/` operator
       val os = operatingSystem.value
       val (sep, suffix) = os match {
         case Windows => ("\\", "exe")
