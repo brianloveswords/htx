@@ -11,7 +11,7 @@ type ExtractorMap = Map[String, Extractor]
 
 case class ConfigEntry(
     url: Matcher,
-    extract: ExtractorMap,
+    extractors: ExtractorMap,
     template: Template,
 )
 
