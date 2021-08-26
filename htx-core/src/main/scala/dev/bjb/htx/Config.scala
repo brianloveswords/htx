@@ -6,7 +6,7 @@ import io.circe.generic.auto.*
 import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
 
-type ExtractMap = Map[String, Extract]
+type ExtractMap = Map[String, Extractor]
 type Config = Seq[ConfigEntry]
 
 case class ConfigEntry(
@@ -25,7 +25,7 @@ object ConfigEntry:
   }
 
   given Arbitrary[ExtractMap] = Arbitrary {
-    Gen.mapOf(Gen.zip(Gen.alphaStr, arbitrary[Extract]))
+    Gen.mapOf(Gen.zip(Gen.alphaStr, arbitrary[Extractor]))
   }
 
   given Arbitrary[ConfigEntry] = Arbitrary {

@@ -9,13 +9,13 @@ import scala.util.control.NoStackTrace
 
 enum ExtractTemplateError extends NoStackTrace:
   case NoReplacements(template: Template)
-  case UnusedExtracts(extractors: Map[String, Extract])
+  case UnusedExtracts(extractors: Map[String, Extractor])
 
 object ExtractTemplateError:
   given Eq[ExtractTemplateError] = Eq.fromUniversalEquals[ExtractTemplateError]
 
 case class ExtractTemplate private (
-    extractors: Map[String, Extract],
+    extractors: Map[String, Extractor],
     template: Template,
 )
 case object ExtractTemplate:
@@ -28,7 +28,7 @@ case object ExtractTemplate:
 
   lazy val extractRe = raw"\{(.*?)\}".r
   def from(
-      extractors: Map[String, Extract],
+      extractors: Map[String, Extractor],
       template: Template,
   ): Either[ExtractTemplateError, ExtractTemplate] = for
     tpl <- Right(template.value)
@@ -39,22 +39,22 @@ case object ExtractTemplate:
   yield ExtractTemplate(ex, template)
 
   def unsafe(
-      extractors: Map[String, Extract],
+      extractors: Map[String, Extractor],
       template: Template,
   ): ExtractTemplate =
     new ExtractTemplate(extractors, template)
 
   private def mergeMatches(
-      extractors: Map[String, Extract],
+      extractors: Map[String, Extractor],
       matches: List[String],
-  ): Either[ExtractTemplateError, Map[String, Extract]] = for
+  ): Either[ExtractTemplateError, Map[String, Extractor]] = for
     ex <- Right(extractors)
     keys = extractors.keySet
     unused = keys.diff(matches.toSet)
     _ <-
       if unused.sizeIs == 0 then Right(extractors)
       else Left(UnusedExtracts(ex.view.filterKeys(unused.contains(_)).toMap))
-  yield matches.map(m => (m, Extract.unsafe(m))).toMap ++ ex
+  yield matches.map(m => (m, Extractor.unsafe(m))).toMap ++ ex
 
 class ExtractTemplateTest extends CommonSuite:
   import ExtractTemplateError.*
@@ -70,8 +70,8 @@ class ExtractTemplateTest extends CommonSuite:
 
   test("unused extracts") {
     val template = Template("x{author}x")
-    val title = ("title" -> Extract(Selector.unsafe("h1.title")))
-    val author = ("author" -> Extract(
+    val title = ("title" -> Extractor(Selector.unsafe("h1.title")))
+    val author = ("author" -> Extractor(
       Selector.unsafe("meta[name='author']"),
       Some("content"),
       Some("Unknown Author"),
@@ -85,9 +85,9 @@ class ExtractTemplateTest extends CommonSuite:
 
   test("template has implicit extractor") {
     val template = Template("{title} by {author} on {date}")
-    val implicitTitle = ("title" -> Extract.unsafe("title"))
-    val implicitDate = ("date" -> Extract.unsafe("date"))
-    val author = ("author" -> Extract.unsafe("author"))
+    val implicitTitle = ("title" -> Extractor.unsafe("title"))
+    val implicitDate = ("date" -> Extractor.unsafe("date"))
+    val author = ("author" -> Extractor.unsafe("author"))
     val result = ExtractTemplate.from(
       extractors = Map(author),
       template = template,

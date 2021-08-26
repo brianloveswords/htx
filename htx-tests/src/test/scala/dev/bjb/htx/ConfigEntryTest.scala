@@ -45,12 +45,12 @@ class ConfigEntryTest extends RoundTripSuite[ConfigEntry]:
         ),
       ),
       Map(
-        "title" -> Extract(
+        "title" -> Extractor(
           mkSelector("meta[property='twitter:title']"),
           Some("content"),
           None,
         ),
-        "author" -> Extract(
+        "author" -> Extractor(
           mkSelector("meta[name='author']"),
           Some("content"),
           Some("Unknown Author"),
