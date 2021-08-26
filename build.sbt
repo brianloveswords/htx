@@ -91,10 +91,23 @@ lazy val grammars = project
         "-visitor",
         inPath,
       )
-
       streams.value.log.info(s"Running Antlr4 with options: ${options.toList}")
       val antlr = new Antlr4(options)
       antlr.processGrammarsOnCommandLine()
+
+      // We also need a version that doesn't have a package because `grun`
+      // doesn't work with packages
+      val optionsNoPkg = Array(
+        "-Xexact-output-dir",
+        "-o",
+        Paths.get(outPath, "nopkg").toString,
+        "-visitor",
+        inPath,
+      )
+      streams.value.log
+        .info(s"Running Antlr4 with options: ${optionsNoPkg.toList}")
+      val antlrNoPkg = new Antlr4(optionsNoPkg)
+      antlrNoPkg.processGrammarsOnCommandLine()
     },
     libraryDependencies += "org.antlr" % "antlr4-runtime" % "4.9.2",
     Compile / compile := (Compile / compile).dependsOn(runAntlr4).value,
