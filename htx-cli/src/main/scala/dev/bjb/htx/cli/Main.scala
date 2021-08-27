@@ -54,6 +54,8 @@ trait Cli[F[_]](using Console[F])(using Async[F], Parallel[F]):
             .fold(error)(_.pure)
             .flatMap(loc =>
               if loc.startsWith("https://") then parseUri(loc)
+              // TODO: this does not work right: need to check if loc is
+              // relative or absolute and then combine it accordingly
               else parseUri(uri.toString + loc),
             )
             .flatTap(showRedirect)
