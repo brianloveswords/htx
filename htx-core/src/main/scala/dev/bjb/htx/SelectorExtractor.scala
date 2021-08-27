@@ -9,6 +9,10 @@ import cats.effect.Concurrent
 import cats.Parallel
 import org.http4s.Uri
 import cats.Monad
+import fs2.Stream
+import io.github.vigoo.prox.ProxFS2
+import fs2.text
+import fs2.Chunk
 
 case class Evaluator[F[_]: Async](
     key: String,
@@ -34,6 +38,22 @@ case class SelectorExtractor[F[_]: Async: Concurrent: Parallel](
     "trim" -> (s => s.trim.pure[F]),
   )
 
+  private def runScript(script: String, input: String): F[String] =
+    //TODO: there is probably a less dumb way to do this
+    val prox = ProxFS2[F]
+    import prox.*
+    val stdin = Stream.chunk(Chunk.array(input.getBytes))
+    val stdout = fs2.text.utf8.decode[F]
+    val proc = (proc"node $script" < stdin) ># stdout
+    val result =
+      given ProcessRunner[JVMProcessInfo] = new JVMProcessRunner()
+      proc.run()
+    result.map(info => info.output)
+
+  private def getFn(name: String): String => F[String] =
+    if name.endsWith("js") then (s: String) => runScript(name, s)
+    else fnMap(name)
+
   lazy val tpl = TemplateEvaluator(template)
   lazy val unsafeEvaluators: Set[Evaluator[F]] =
     tpl.patterns
@@ -41,9 +61,8 @@ case class SelectorExtractor[F[_]: Async: Concurrent: Parallel](
       .map(key => {
         if key.contains("|>") then
           val parts = key.split("\\|>").toList
-          System.err.println(parts)
           val selector = Selector.unsafe(parts.head)
-          val fns = parts.tail.map(name => fnMap(name.trim))
+          val fns = parts.tail.map(name => getFn(name.trim))
           val fn = fns.reduce(compose)
           Evaluator(key, selector, fn)
         else Evaluator[F](key, Selector.unsafe(key), Monad[F].pure)

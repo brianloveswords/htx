@@ -17,6 +17,13 @@ class SelectorExtractorTest extends CommonSuite:
     }
   }
 
+  test("title from html, but shouted using JS") {
+    val ex = SelectorExtractor[IO]("{title |> upper.js |> trim}")
+    ex.eval("<title>    cool  </title>") map { result =>
+      assertEquals(result, List("COOL"))
+    }
+  }
+
   test("multiple matching elements") {
     val html = """
     |<title>site</title>
