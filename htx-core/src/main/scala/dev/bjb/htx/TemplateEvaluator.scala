@@ -89,8 +89,10 @@ private class TemplateVisitor extends TemplateBaseVisitor[Seq[Part]]:
       acc ++ visit(child)
     }
 
-  def unescape(s: String): String =
-    s.replace("\\{", "{").replace("\\}", "}")
+  def unescape(s: String): String = s
+    .replace("\\{", "{")
+    .replace("\\}", "}")
+    .replace("\\n", "\n")
 
   override def visitTemplate(ctx: TemplateContext) =
     descend(ctx)
