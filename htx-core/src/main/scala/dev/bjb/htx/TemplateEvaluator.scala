@@ -1,5 +1,6 @@
 package dev.bjb.htx
 
+import cats.effect.IO
 import cats.implicits.*
 import dev.bjb.htx.grammar.TemplateBaseVisitor
 import dev.bjb.htx.grammar.TemplateLexer
@@ -8,19 +9,56 @@ import org.antlr.v4.runtime.*
 import org.antlr.v4.runtime.tree.*
 
 import scala.collection.mutable.ArrayBuffer
+import scala.concurrent.duration.*
 import scala.jdk.CollectionConverters.*
-import cats.effect.IO
 
 enum Part:
   case Text(inner: String)
   case Pattern(inner: String)
 export Part.*
 
-private def defaultFn[A](a: A) = IO.pure[A](a)
 case class TemplateEvaluator(parts: Seq[Part]):
   val patterns = parts.collect { case Pattern(p) => p }.toSet
 
-  def eval(ctx: Map[String, List[String]]) = ???
+  def eval(ctx: Map[String, List[String]]): IO[List[String]] =
+    def keyError(k: String) =
+      IO.raiseError(new IllegalArgumentException(s"no such key $k"))
+
+    val empty: (Int, List[List[String]]) = (1, List.empty)
+
+    parts.foldLeft(IO.pure(empty)) { (pair, part) =>
+      pair.flatMap { (cardinality, acc) =>
+        part match
+          case Text(s) => IO.pure((cardinality, acc :+ List(s)))
+          case Pattern(p) =>
+            ctx.get(p).fold(keyError(p)) { values =>
+              values.map(process).parSequence map { rendered =>
+                (cardinality * values.length, acc :+ rendered)
+              }
+            }
+      }
+    } map { (cardinality, lists) =>
+      val infiniteLists = lists.map { list =>
+        val arr = list.toArray
+        val size = arr.size
+        new Iterator[String] {
+          var idx = 0
+          def hasNext = true
+          def next =
+            val result = arr(idx)
+            idx += 1
+            result
+        }
+      }
+
+      (1 to cardinality).toList.map { i =>
+        infiniteLists.foldLeft("") { (acc, list) =>
+          acc ++ list.next()
+        }
+      }
+    }
+
+  private def process(s: String) = IO.pure(s)
 
 object TemplateEvaluator:
   def apply(input: String): TemplateEvaluator =
