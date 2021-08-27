@@ -1,10 +1,14 @@
-import scala.util.control.NonFatal
-import scala.collection.mutable.ArrayBuilder
 import java.io.File
-import sbtassembly.AssemblyKeys
-import scala.sys.process._
-import org.antlr.v4.{Tool => Antlr4}
+import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
+import scala.collection.mutable.ArrayBuilder
+import scala.sys.process._
+import scala.util.control.NonFatal
+
+import org.antlr.v4.{Tool => Antlr4}
+import sbt.nio.Keys._
+import sbtassembly.AssemblyKeys
 
 val scalaVer = "3.0.1"
 
@@ -65,7 +69,7 @@ inThisBuild(
 
 name := "htxRoot"
 
-val antlrRun = taskKey[Unit](
+val antlrBuildGrammars = taskKey[Unit](
   "Run antlr4 on some grammars",
 )
 val antlrClean = taskKey[Unit](
@@ -82,16 +86,20 @@ lazy val grammar = project
   .in(file("htx-grammar"))
   .settings(
     moduleName := "htx-grammar",
-    antlrOutputDir := baseDirectory.value / "src" / "main" / "java",
-    antlrGrammars := Seq("Template.g4"),
+    javaSource := baseDirectory.value / "src" / "main" / "java",
+    resourceDirectory := baseDirectory.value / "src" / "main" / "resources",
+    antlrOutputDir := (baseDirectory / javaSource).value,
+    antlrBuildGrammars / fileInputs += (baseDirectory / resourceDirectory).value.toGlob / "*.g4",
     cleanFiles += antlrOutputDir.value,
-    Compile / compile := (Compile / compile).dependsOn(antlrRun).value,
-    antlrRun := {
-      clean.value
-
-      // TODO: figure out how to tell sbt to cache when grammars haven't changed?
+    Compile / compile := (Compile / compile)
+      .dependsOn(antlrBuildGrammars)
+      .value,
+    antlrBuildGrammars := (Def.taskDyn {
       val pkg = "dev.bjb.htx.grammar"
       val log = streams.value.log
+      val changes = antlrBuildGrammars.inputFileChanges
+      val updated = (changes.created ++ changes.modified).toSet.size > 0
+
       def mkArgs(
           inFile: File,
           outDir: File,
@@ -117,15 +125,20 @@ lazy val grammar = project
           throw new MessageOnlyException(s"Antlr4 Failed")
       }
 
-      antlrGrammars.value.foreach { grammar =>
-        val inPath =
-          baseDirectory.value / "src" / "main" / "resources" / s"$grammar"
-        val outPath = antlrOutputDir.value
+      val grammars = (antlrBuildGrammars / allInputFiles).value
 
-        runAntlr(inPath, outPath)
-        runAntlr(inPath, outPath / "nopkg", withPkg = false)
+      if (updated) Def.task {
+        clean.value
+        grammars.foreach { grammar =>
+          val inPath = grammar.toFile
+          val outPath = antlrOutputDir.value
+
+          runAntlr(inPath, outPath)
+          runAntlr(inPath, outPath / "nopkg", withPkg = false)
+        }
       }
-    },
+      else Def.task { }
+    }).value,
   )
 
 lazy val core = project
