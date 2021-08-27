@@ -1,8 +1,8 @@
 package dev.bjb.htx
 
-import dev.bjb.htx.grammar.TemplateLexer
-import dev.bjb.htx.grammar.TemplateParser
-import dev.bjb.htx.grammar.TemplateBaseVisitor
+import dev.bjb.htx.grammar.ExprLexer
+import dev.bjb.htx.grammar.ExprParser
+import dev.bjb.htx.grammar.ExprBaseVisitor
 import org.antlr.v4.runtime.*
 import org.antlr.v4.runtime.tree.*
 
@@ -12,12 +12,12 @@ def getParser[L <: Lexer, P <: Parser](
     contents: String,
 ): P = parser(CommonTokenStream(lexer(CharStreams.fromString(contents))))
 
-class TemplateParserTest extends CommonSuite:
+class ExprParserTest extends CommonSuite:
   test("ok".only) {
-    val visitor = TemplateVisitor()
+    val visitor = ExprVisitor()
     val parser = getParser(
-      TemplateLexer(_),
-      TemplateParser(_),
+      ExprLexer(_),
+      ExprParser(_),
       "1+1\n",
     )
     val tree = parser.prog()
@@ -26,8 +26,8 @@ class TemplateParserTest extends CommonSuite:
     assertEquals(result, 2) //
   }
 
-class TemplateVisitor extends TemplateBaseVisitor[Int]:
-  import TemplateParser.*
+class ExprVisitor extends ExprBaseVisitor[Int]:
+  import ExprParser.*
 
   var memory = Map[String, Int]()
 

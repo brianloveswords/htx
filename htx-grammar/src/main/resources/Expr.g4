@@ -1,4 +1,4 @@
-grammar Template;
+grammar Expr;
 import CommonLexerRules;
 
 prog: stat+;
