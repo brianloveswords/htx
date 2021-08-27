@@ -55,3 +55,47 @@ class TemplateParserTest extends CommonSuite:
       assertEquals(result, List("x1x", "x2x"))
     }
   }
+
+  test("eval: two patterns, two replacements") {
+    val parser = TemplateEvaluator("{a}{b}")
+    val replacements = Map(
+      "a" -> List("a1", "a2"),
+      "b" -> List("b1", "b2"),
+    )
+    val expected = List(
+      "a1b1",
+      "a2b2",
+      "a1b1",
+      "a2b2",
+    )
+    parser.eval(replacements) map { result =>
+      assertEquals(result, expected)
+    }
+  }
+
+  test("eval: three patterns, non-symmetrical") {
+    val parser = TemplateEvaluator("{a}{b}{c}{d}")
+    val replacements = Map(
+      "a" -> List("a1", "a2", "a3"),
+      "b" -> List("b1"),
+      "c" -> List("c1", "c2"),
+      "d" -> List("d1", "d2"),
+    )
+    val expected = List(
+      "a1b1c1d1",
+      "a2b1c2d2",
+      "a3b1c1d1",
+      "a1b1c2d2",
+      "a2b1c1d1",
+      "a3b1c2d2",
+      "a1b1c1d1",
+      "a2b1c2d2",
+      "a3b1c1d1",
+      "a1b1c2d2",
+      "a2b1c1d1",
+      "a3b1c2d2",
+    )
+    parser.eval(replacements) map { result =>
+      assertEquals(result, expected)
+    }
+  }
