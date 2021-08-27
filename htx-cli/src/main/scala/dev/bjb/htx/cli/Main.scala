@@ -68,7 +68,7 @@ trait Cli[F[_]](using Console[F])(using Async[F], Parallel[F]):
       _ <- Console[F].errorln(s"url: $uri")
       result <- getHtml(uri)
       (html, uri) = result
-      result <- ex.eval[F](html)
+      result <- ex.eval[F](html, Some(uri))
       s = result.mkString("\n")
       _ <- Console[F].print(s)
     yield ExitCode.Success
