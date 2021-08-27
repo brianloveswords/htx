@@ -20,18 +20,45 @@ class TemplateParserTest extends CommonSuite:
       TemplateParser(_),
       "1+1\n",
     )
-    val tree = parser.top()
+    val tree = parser.prog()
 
-    visitor.visit(tree)
-    visitor.total
-    assertEquals(visitor.total, 2) //
+    val result = visitor.visit(tree)
+    assertEquals(result, 2) //
   }
 
 class TemplateVisitor extends TemplateBaseVisitor[Int]:
   import TemplateParser.*
 
-  var total: Int = 0
+  var memory = Map[String, Int]()
 
-  override def visitTop(ctx: TopContext): Int =
-    total += 1
-    total
+  override def visitAssign(ctx: AssignContext): Int =
+    val id = ctx.ID().getText
+    val value = visit(ctx.expr())
+    memory += id -> value
+    value
+
+  override def visitPrintExpr(ctx: PrintExprContext): Int =
+    val value = visit(ctx.expr())
+    value
+
+  override def visitInt(ctx: IntContext): Int =
+    ctx.INT().getText.toInt
+
+  override def visitId(ctx: IdContext): Int =
+    val id = ctx.ID().getText
+    memory.getOrElse(id, 0)
+
+  override def visitMulDiv(ctx: MulDivContext): Int =
+    val left = visit(ctx.expr(0))
+    val right = visit(ctx.expr(1))
+    if ctx.op.getType == MUL then left * right
+    else left / right
+
+  override def visitAddSub(ctx: AddSubContext): Int =
+    val left = visit(ctx.expr(0))
+    val right = visit(ctx.expr(1))
+    if ctx.op.getType == ADD then left + right
+    else left - right
+
+  override def visitParens(ctx: ParensContext): Int =
+    visit(ctx.expr())
