@@ -15,6 +15,17 @@ import munit.Location
 import munit.internal.console.StackTraces
 import munit.internal.difflib.Diffs
 import munit.internal.difflib.ComparisonFailExceptionHandler
+import org.antlr.v4.runtime.Lexer
+import org.antlr.v4.runtime.Parser
+import org.antlr.v4.runtime.CharStream
+import org.antlr.v4.runtime.CommonTokenStream
+import org.antlr.v4.runtime.CharStreams
+
+def getParser[L <: Lexer, P <: Parser](
+    lexer: CharStream => L,
+    parser: CommonTokenStream => P,
+    contents: String,
+): P = parser(CommonTokenStream(lexer(CharStreams.fromString(contents))))
 
 trait CommonSuite extends CatsEffectSuite with ScalaCheckEffectSuite:
   // NOTE(brianloveswords): stolen form munit innards so I could override

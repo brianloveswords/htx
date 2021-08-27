@@ -6,12 +6,6 @@ import dev.bjb.htx.grammar.ExprBaseVisitor
 import org.antlr.v4.runtime.*
 import org.antlr.v4.runtime.tree.*
 
-def getParser[L <: Lexer, P <: Parser](
-    lexer: CharStream => L,
-    parser: CommonTokenStream => P,
-    contents: String,
-): P = parser(CommonTokenStream(lexer(CharStreams.fromString(contents))))
-
 class ExprParserTest extends CommonSuite:
   test("ok".only) {
     val visitor = ExprVisitor()

@@ -86,9 +86,8 @@ lazy val grammar = project
   .in(file("htx-grammar"))
   .settings(
     moduleName := "htx-grammar",
-    javaSource := baseDirectory.value / "src" / "main" / "java",
     resourceDirectory := baseDirectory.value / "src" / "main" / "resources",
-    antlrOutputDir := (baseDirectory / javaSource).value,
+    antlrOutputDir := baseDirectory.value / "src" / "main" / "java",
     antlrBuildGrammars / fileInputs += (baseDirectory / resourceDirectory).value.toGlob / "*.g4",
     cleanFiles += antlrOutputDir.value,
     Compile / compile := (Compile / compile)
@@ -133,7 +132,7 @@ lazy val grammar = project
           val inPath = grammar.toFile
           val outPath = antlrOutputDir.value
 
-          runAntlr(inPath, outPath)
+          runAntlr(inPath, outPath / "pkg")
           runAntlr(inPath, outPath / "nopkg", withPkg = false)
         }
       }
