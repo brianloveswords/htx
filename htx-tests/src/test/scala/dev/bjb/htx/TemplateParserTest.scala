@@ -12,8 +12,13 @@ def getParser[L <: Lexer, P <: Parser](
     contents: String,
 ): P = parser(CommonTokenStream(lexer(CharStreams.fromString(contents))))
 
+enum Part:
+  case Text(inner: String)
+  case Curly(inner: String)
+import Part.*
+
 class TemplateParserTest extends CommonSuite:
-  test("ok".only) {
+  test("1 part, all text") {
     val visitor = TemplateVisitor()
     val parser = getParser(
       TemplateLexer(_),
@@ -22,11 +27,13 @@ class TemplateParserTest extends CommonSuite:
     )
     val tree = parser.text()
     val result = visitor.visit(tree)
-    assertEquals(result, "oh hello!")
+    assertEquals(result, Seq(Text("oh hello!")))
   }
 
-class TemplateVisitor extends TemplateBaseVisitor[String]:
+class TemplateVisitor extends TemplateBaseVisitor[Seq[Part]]:
   import TemplateParser.*
 
+  var parts: Seq[Part] = Vector.empty
+
   override def visitText(ctx: TextContext) =
-    ctx.getText()
+    parts :+ Text(ctx.getText())
