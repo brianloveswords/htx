@@ -28,7 +28,7 @@ lazy val operatingSystem = settingKey[OS](
   "Current operating system",
 )
 
-lazy val upxPath = settingKey[String](
+lazy val upxPath = settingKey[File](
   "Path to UPX binary",
 )
 lazy val nativeImageCompressed = taskKey[Unit](
@@ -195,20 +195,19 @@ lazy val cli = project
     },
     operatingSystem := OS.get,
     upxPath := {
-      // TODO: rewrite all this in terms of `File` and the `/` operator
       val os = operatingSystem.value
-      val (sep, suffix) = os match {
-        case Windows => ("\\", "exe")
-        case Linux   => ("/", "linux")
-        case MacOS   => ("/", "macos")
+      val suffix = os match {
+        case Windows => "exe"
+        case Linux   => "linux"
+        case MacOS   => "macos"
       }
       val upx = "upx." + suffix
-      List("project", "bin", "upx", upx).mkString(sep)
+      file("project") / "bin" / "upx" / upx
     },
     nativeImageCompressed := {
       nativeImage.value
       val os = operatingSystem.value
-      val upx = upxPath.value
+      val upx = upxPath.value.toString
 
       val target = os match {
         case Windows => "target\\htx.exe"

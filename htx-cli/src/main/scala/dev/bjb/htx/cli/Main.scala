@@ -37,11 +37,18 @@ trait Cli[F[_]](using Console[F])(using Async[F], Parallel[F]):
   private def printErrorAndExit(err: Throwable): F[ExitCode] =
     Console[F].errorln(err.getMessage).as(ExitCode.Error)
 
+  private def filterOpts(args: List[String]): List[String] =
+    args.filter(!_.startsWith("-"))
+
   private def extractFirstArg(args: List[String]): F[String] =
-    args.headOption.fold(missingArgumentError[String])(_.pure)
+    filterOpts(args).headOption
+      .fold(missingArgumentError[String])(_.pure)
 
   private def extractSecondArg(args: List[String]): F[String] =
-    extractFirstArg(args.tail)
+    extractFirstArg(filterOpts(args).tail)
+
+  private def includeNewLine(args: List[String]): Boolean =
+    !args.contains("-n")
 
   private def getHtml(uri: Uri): F[(String, Uri)] =
     client.get(uri) { resp =>
@@ -65,14 +72,21 @@ trait Cli[F[_]](using Console[F])(using Async[F], Parallel[F]):
 
   def run(args: List[String]): F[ExitCode] =
     val program = for
-      uri <- extractFirstArg(args) flatMap parseUri
-      ex <- extractSecondArg(args).map(SelectorExtractor(_))
-      _ <- Console[F].errorln(s"url: $uri")
+      uriArg <- extractFirstArg(args)
+      uri <- parseUri(
+        if uriArg.startsWith("http") then uriArg else "https://" + uriArg,
+      )
+      tpl <- extractSecondArg(args)
+      ex = SelectorExtractor(tpl)
+      newLine = if includeNewLine(args) then "\n" else ""
+      _ <- Console[F].errorln(s"args: $args")
+      _ <- Console[F].errorln(s"uri: $uri")
+      _ <- Console[F].errorln(s"tpl: $tpl")
       result <- getHtml(uri)
       (html, uri) = result
       result <- ex.eval[F](html, Some(uri))
-      s = result.mkString("\n")
-      _ <- Console[F].print(s)
+      formatted = result.mkString("\n") + newLine
+      _ <- Console[F].print(formatted)
     yield ExitCode.Success
 
     Async[F].timeout(program.handleErrorWith(printErrorAndExit), 10.seconds)

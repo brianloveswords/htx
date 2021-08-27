@@ -7,7 +7,7 @@ on:
     release:
         types: [published]
 jobs:
-    unix:
+    build:
         env:
             CI: true
         runs-on: ${{ matrix.os }}
@@ -39,8 +39,8 @@ jobs:
               if: ${{ matrix.os == 'windows-latest' }}
               run: >-
                   "C:\Program Files (x86)\Microsoft Visual
-                  Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat" && sbt
-                  cli/nativeImageCompressed
+                  Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat" &&
+                  sbt cli/nativeImageCompressed
             - uses: actions/upload-artifact@v2
               with:
                   path: ${{ matrix.local_path }}
