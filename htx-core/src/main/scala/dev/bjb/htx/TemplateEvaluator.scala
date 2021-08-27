@@ -1,10 +1,12 @@
 package dev.bjb.htx
 
+import cats.implicits.*
+import dev.bjb.htx.grammar.TemplateBaseVisitor
+import dev.bjb.htx.grammar.TemplateLexer
+import dev.bjb.htx.grammar.TemplateParser
 import org.antlr.v4.runtime.*
 import org.antlr.v4.runtime.tree.*
-import dev.bjb.htx.grammar.TemplateParser
-import dev.bjb.htx.grammar.TemplateLexer
-import dev.bjb.htx.grammar.TemplateBaseVisitor
+
 import scala.collection.mutable.ArrayBuffer
 import scala.jdk.CollectionConverters.*
 

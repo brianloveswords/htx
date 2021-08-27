@@ -14,8 +14,8 @@ class TemplateParserTest extends CommonSuite:
   }
 
   test("1 text, with escapes") {
-    val parser = TemplateEvaluator("oh \\{hello\\}")
-    assertEquals(parser.parts, Seq(Text("oh {hello}")))
+    val parser = TemplateEvaluator("oh \\\\{hello\\\\}")
+    assertEquals(parser.parts, Seq(Text("oh \\{hello\\}")))
   }
 
   test("temp: window") {
