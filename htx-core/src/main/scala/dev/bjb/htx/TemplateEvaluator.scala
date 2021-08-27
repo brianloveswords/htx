@@ -40,13 +40,13 @@ case class TemplateEvaluator(parts: Seq[Part]):
     } map { (cardinality, lists) =>
       val infiniteLists = lists.map { list =>
         val arr = list.toArray
-        val size = arr.size
+        val len = arr.size
         new Iterator[String] {
           var idx = 0
           def hasNext = true
           def next =
             val result = arr(idx)
-            idx += 1
+            idx = if idx + 1 >= len then 0 else idx + 1
             result
         }
       }
