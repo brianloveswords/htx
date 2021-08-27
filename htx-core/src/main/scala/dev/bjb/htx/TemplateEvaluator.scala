@@ -9,14 +9,18 @@ import org.antlr.v4.runtime.tree.*
 
 import scala.collection.mutable.ArrayBuffer
 import scala.jdk.CollectionConverters.*
+import cats.effect.IO
 
 enum Part:
   case Text(inner: String)
   case Pattern(inner: String)
 export Part.*
 
+private def defaultFn[A](a: A) = IO.pure[A](a)
 case class TemplateEvaluator(parts: Seq[Part]):
-  def eval = ???
+  val patterns = parts.collect { case Pattern(p) => p }.toSet
+
+  def eval(ctx: Map[String, List[String]]) = ???
 
 object TemplateEvaluator:
   def apply(input: String): TemplateEvaluator =
@@ -50,8 +54,7 @@ private class TemplateVisitor extends TemplateBaseVisitor[Seq[Part]]:
     descend(ctx)
 
   override def visitPattern(ctx: PatternContext) =
-    // drop the { and }
-    val inner = ctx.getText().tail.init
+    val inner = ctx.getText().tail.init.trim
     Seq(Pattern(inner))
 
   override def visitText(ctx: TextContext) =
