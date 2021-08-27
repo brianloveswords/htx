@@ -3,6 +3,10 @@
         "name": "byte[]"
     },
     {
+        "name": "cats.Later",
+        "fields": [{ "name": "0bitmap$1" }]
+    },
+    {
         "name": "cats.effect.unsafe.IORuntimeCompanionPlatform",
         "fields": [{ "name": "0bitmap$1" }]
     },
@@ -42,6 +46,10 @@
     },
     {
         "name": "dev.bjb.htx.Selector$",
+        "fields": [{ "name": "0bitmap$1" }]
+    },
+    {
+        "name": "dev.bjb.htx.SelectorExtractor",
         "fields": [{ "name": "0bitmap$1" }]
     },
     {
