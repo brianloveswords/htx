@@ -18,12 +18,12 @@ class ExprParserTest extends CommonSuite:
     val parser = getParser(
       ExprLexer(_),
       ExprParser(_),
-      "1+1\n",
+      "(1+2) * 2\n",
     )
     val tree = parser.prog()
 
     val result = visitor.visit(tree)
-    assertEquals(result, 2) //
+    assertEquals(result, 6) //
   }
 
 class ExprVisitor extends ExprBaseVisitor[Int]:
