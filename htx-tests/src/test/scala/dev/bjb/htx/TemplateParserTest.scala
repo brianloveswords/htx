@@ -1,6 +1,7 @@
 package dev.bjb.htx
 
 import org.antlr.v4.runtime.*
+import cats.effect.IO
 
 class TemplateParserTest extends CommonSuite:
   test("1 part, all text") {
@@ -37,28 +38,28 @@ class TemplateParserTest extends CommonSuite:
 
   test("eval: no replacements") {
     val parser = TemplateEvaluator("constant")
-    parser.eval(Map.empty) map { result =>
+    parser.eval[IO](Map.empty) map { result =>
       assertEquals(result, List("constant"))
     }
   }
 
   test("eval: one pattern, missing") {
     val parser = TemplateEvaluator("{404}")
-    parser.eval(Map.empty) map { result =>
+    parser.eval[IO](Map.empty) map { result =>
       assertEquals(result, List("<missing: 404>"))
     }
   }
 
   test("eval: one pattern, one replacement") {
     val parser = TemplateEvaluator("x{ a }x")
-    parser.eval(Map("a" -> List("1"))) map { result =>
+    parser.eval[IO](Map("a" -> List("1"))) map { result =>
       assertEquals(result, List("x1x"))
     }
   }
 
   test("eval: one pattern, two replacements") {
     val parser = TemplateEvaluator("x{ a }x")
-    parser.eval(Map("a" -> List("1", "2"))) map { result =>
+    parser.eval[IO](Map("a" -> List("1", "2"))) map { result =>
       assertEquals(result, List("x1x", "x2x"))
     }
   }
@@ -75,7 +76,7 @@ class TemplateParserTest extends CommonSuite:
       "a1b1",
       "a2b2",
     )
-    parser.eval(replacements) map { result =>
+    parser.eval[IO](replacements) map { result =>
       assertEquals(result, expected)
     }
   }
@@ -102,7 +103,7 @@ class TemplateParserTest extends CommonSuite:
       "a2b1c1d1",
       "a3b1c2d2",
     )
-    parser.eval(replacements) map { result =>
+    parser.eval[IO](replacements) map { result =>
       assertEquals(result, expected)
     }
   }

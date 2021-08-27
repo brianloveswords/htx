@@ -34,13 +34,24 @@ def mkConsole: IO[MockConsole] =
   }
 
 class CliLiveTest extends CommonSuite:
-  test("example") {
+  test("example: mdlink template") {
     for
       console <- mkConsole
       testCli = new Cli[IO](using console) {}
-      result <- testCli.run(List("https://example.com"))
+      result <- testCli.run(List("https://example.com", "[{title}]({@})"))
       stdio <- console.getStdio
     yield
       assertEquals(stdio.out, "[Example Domain](https://example.com)")
+      assertEquals(result, ExitCode.Success)
+  }
+
+  test("example: alternate template") {
+    for
+      console <- mkConsole
+      testCli = new Cli[IO](using console) {}
+      result <- testCli.run(List("https://example.com", "**{title}**: {@}"))
+      stdio <- console.getStdio
+    yield
+      assertEquals(stdio.out, "**Example Domain**: https://example.com")
       assertEquals(result, ExitCode.Success)
   }

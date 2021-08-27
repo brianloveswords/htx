@@ -11,6 +11,9 @@ import org.antlr.v4.runtime.tree.*
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration.*
 import scala.jdk.CollectionConverters.*
+import cats.effect.Async
+import cats.effect.Concurrent
+import cats.Parallel
 
 enum Part:
   case Text(inner: String)
@@ -20,20 +23,27 @@ export Part.*
 case class TemplateEvaluator(parts: Seq[Part]):
   val patterns = parts.collect { case Pattern(p) => p }.toSet
 
-  def eval(ctx: Map[String, List[String]]): IO[List[String]] =
-    val empty: (Int, List[List[String]]) = (1, List.empty)
-    parts.foldLeft(IO.pure(empty)) { (pair, part) =>
+  def eval[F[_]: Async: Concurrent: Parallel](
+      ctx: Map[String, List[String]],
+  ): F[List[String]] =
+    type Entry = (Int, List[List[String]])
+    def process(s: String) = Async[F].pure(s)
+    val empty: F[Entry] = Async[F].pure((1, List.empty))
+    parts.foldLeft(empty) { (pair, part) =>
       pair.flatMap { (cardinality, acc) =>
         part match
-          case Text(s) => IO.pure((cardinality, acc :+ List(s)))
+          case Text(s) => Async[F].pure((cardinality, acc :+ List(s)))
           case Pattern(p) =>
-            val notFound = (cardinality, List(List(s"<missing: $p>")))
+            val notFound: F[Entry] =
+              Async[F].pure((cardinality, List(List(s"<missing: $p>"))))
+
             // TODO: cache this computation
-            val computed = ctx.get(p).fold(IO.pure(notFound)) { values =>
-              values.map(process).parSequence map { rendered =>
-                (cardinality * values.length, acc :+ rendered)
+            val computed: F[Entry] =
+              ctx.get(p).fold(notFound) { values =>
+                values.map(process).parSequence map { rendered =>
+                  (cardinality * values.length, acc :+ rendered)
+                }
               }
-            }
             computed
       }
     } map { (cardinality, lists) =>
@@ -56,8 +66,6 @@ case class TemplateEvaluator(parts: Seq[Part]):
         }
       }
     }
-
-  private def process(s: String) = IO.pure(s)
 
 object TemplateEvaluator:
   def apply(input: String): TemplateEvaluator =
