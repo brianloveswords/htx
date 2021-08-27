@@ -42,6 +42,13 @@ class TemplateParserTest extends CommonSuite:
     }
   }
 
+  test("eval: one pattern, missing") {
+    val parser = TemplateEvaluator("{404}")
+    parser.eval(Map.empty) map { result =>
+      assertEquals(result, List("<missing: 404>"))
+    }
+  }
+
   test("eval: one pattern, one replacement") {
     val parser = TemplateEvaluator("x{ a }x")
     parser.eval(Map("a" -> List("1"))) map { result =>

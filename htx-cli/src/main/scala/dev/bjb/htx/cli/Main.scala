@@ -62,7 +62,7 @@ trait Cli[F[_]](using Console[F])(using Async[F]):
       (html, uri) = result
       soup = PureSoup(html)
       selector = Selector.unsafe("title")
-      element = soup.extract(selector)
+      element = soup.extract(selector).headOption
       title = element.fold("<title not found>")(_.text)
       _ <- Console[F].print(s"[$title]($uri)")
     yield ExitCode.Success

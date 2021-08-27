@@ -38,7 +38,7 @@ class PureSoupTest extends CommonSuite:
       val Right(result) = Selector(tag) map soup.extract
       assertEquals(
         result,
-        Some(Element(tag, Map(attr -> value), text)),
+        List(Element(tag, Map(attr -> value), text)),
         s"with soup: $soup",
       )
     }
@@ -48,6 +48,6 @@ class PureSoupTest extends CommonSuite:
     Prop.forAllNoShrink(genHtmlAndMissingTag) { (missing, html) =>
       val soup = PureSoup(html)
       val Right(result) = Selector(missing) map soup.extract
-      assertEquals(result, None, s"with soup: $soup")
+      assertEquals(result, List(), s"with soup: $soup")
     }
   }

@@ -21,21 +21,20 @@ case class TemplateEvaluator(parts: Seq[Part]):
   val patterns = parts.collect { case Pattern(p) => p }.toSet
 
   def eval(ctx: Map[String, List[String]]): IO[List[String]] =
-    def keyError(k: String) =
-      IO.raiseError(new IllegalArgumentException(s"no such key $k"))
-
     val empty: (Int, List[List[String]]) = (1, List.empty)
-
     parts.foldLeft(IO.pure(empty)) { (pair, part) =>
       pair.flatMap { (cardinality, acc) =>
         part match
           case Text(s) => IO.pure((cardinality, acc :+ List(s)))
           case Pattern(p) =>
-            ctx.get(p).fold(keyError(p)) { values =>
+            val notFound = (cardinality, List(List(s"<missing: $p>")))
+            // TODO: cache this computation
+            val computed = ctx.get(p).fold(IO.pure(notFound)) { values =>
               values.map(process).parSequence map { rendered =>
                 (cardinality * values.length, acc :+ rendered)
               }
             }
+            computed
       }
     } map { (cardinality, lists) =>
       val infiniteLists = lists.map { list =>
