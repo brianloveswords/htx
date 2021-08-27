@@ -11,8 +11,66 @@ import io.circe.parser.*
 import io.circe.generic.auto.*
 import cats.implicits.*
 import cats.Eq
+import munit.Location
+import munit.internal.console.StackTraces
+import munit.internal.difflib.Diffs
+import munit.internal.difflib.ComparisonFailExceptionHandler
+import org.antlr.v4.runtime.Lexer
+import org.antlr.v4.runtime.Parser
+import org.antlr.v4.runtime.CharStream
+import org.antlr.v4.runtime.CommonTokenStream
+import org.antlr.v4.runtime.CharStreams
 
-trait CommonSuite extends CatsEffectSuite with ScalaCheckEffectSuite
+def getParser[L <: Lexer, P <: Parser](
+    lexer: CharStream => L,
+    parser: CommonTokenStream => P,
+    contents: String,
+): P = parser(CommonTokenStream(lexer(CharStreams.fromString(contents))))
+
+trait CommonSuite extends CatsEffectSuite with ScalaCheckEffectSuite:
+  // NOTE(brianloveswords): stolen form munit innards so I could override
+  // equality operator with Eq.eqv
+  private def munitComparisonHandler(
+      actualObtained: Any,
+      actualExpected: Any,
+  ): ComparisonFailExceptionHandler =
+    new ComparisonFailExceptionHandler {
+      override def handle(
+          message: String,
+          unusedObtained: String,
+          unusedExpected: String,
+          loc: Location,
+      ): Nothing = failComparison(message, actualObtained, actualExpected)(loc)
+    }
+
+  def assertEq[A: Eq, B: Eq](
+      obtained: A,
+      expected: B,
+      clue: => Any = "values are not the same",
+  )(implicit loc: Location, ev: B <:< A): Unit =
+    StackTraces.dropInside {
+      if (!(obtained === expected))
+        Diffs.assertNoDiff(
+          munitPrint(obtained),
+          munitPrint(expected),
+          munitComparisonHandler(obtained, expected),
+          munitPrint(clue),
+          printObtainedAsStripMargin = false,
+        )
+        // try with `.toString` in case `munitPrint()` produces identical formatting for both values.
+        Diffs.assertNoDiff(
+          obtained.toString(),
+          expected.toString(),
+          munitComparisonHandler(obtained, expected),
+          munitPrint(clue),
+          printObtainedAsStripMargin = false,
+        )
+        failComparison(
+          s"values are not equal even if they have the same `toString()`: $obtained",
+          obtained,
+          expected,
+        )
+    }
 
 trait RoundTripSuite[T: Arbitrary: Decoder: Encoder: Eq] extends CommonSuite:
   def roundtrip: Unit = roundtrip { (a, b) => assert(a === b) }

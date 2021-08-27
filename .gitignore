@@ -1,7 +1,9 @@
 .metals
 .bloop
 .bsp
+.antlr
 target
 tmp
 bin/*
+htx-grammar/src/main/java/*
 wormhole

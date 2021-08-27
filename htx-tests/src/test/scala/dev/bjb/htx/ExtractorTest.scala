@@ -3,5 +3,5 @@ package dev.bjb.htx
 import io.circe.generic.auto.*
 import io.circe.parser.*
 
-class ExtractTest extends RoundTripSuite[Extract]:
+class ExtractorTest extends RoundTripSuite[Extractor]:
   roundtrip

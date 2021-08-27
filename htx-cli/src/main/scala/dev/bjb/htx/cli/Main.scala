@@ -20,8 +20,9 @@ import java.net.URL
 import scala.concurrent.duration.*
 import scala.util.control.NoStackTrace
 import scala.util.control.NonFatal
+import cats.Parallel
 
-trait Cli[F[_]](using Console[F])(using Async[F]):
+trait Cli[F[_]](using Console[F])(using Async[F], Parallel[F]):
   private val client = JavaNetClientBuilder[F].create
   private def getLocationHeader = getHeader("location")
 
@@ -39,6 +40,9 @@ trait Cli[F[_]](using Console[F])(using Async[F]):
   private def extractFirstArg(args: List[String]): F[String] =
     args.headOption.fold(missingArgumentError[String])(_.pure)
 
+  private def extractSecondArg(args: List[String]): F[String] =
+    extractFirstArg(args.tail)
+
   private def getHtml(uri: Uri): F[(String, Uri)] =
     client.get(uri) { resp =>
       resp.status match
@@ -48,7 +52,10 @@ trait Cli[F[_]](using Console[F])(using Async[F]):
           lazy val error: F[String] = MissingLocationHeader.raise(uri, headers)
           getLocationHeader(headers)
             .fold(error)(_.pure)
-            .flatMap(parseUri)
+            .flatMap(loc =>
+              if loc.startsWith("https://") then parseUri(loc)
+              else parseUri(uri.toString + loc),
+            )
             .flatTap(showRedirect)
             .flatMap(getHtml)
         case status => MonadThrow[F].raiseError(UnexpectedStatus(uri, status))
@@ -57,15 +64,15 @@ trait Cli[F[_]](using Console[F])(using Async[F]):
   def run(args: List[String]): F[ExitCode] =
     val program = for
       uri <- extractFirstArg(args) flatMap parseUri
+      ex <- extractSecondArg(args).map(SelectorExtractor(_))
       _ <- Console[F].errorln(s"url: $uri")
       result <- getHtml(uri)
       (html, uri) = result
-      soup = PureSoup(html)
-      selector = Selector.unsafe("title")
-      element = soup.extract(selector)
-      title = element.fold("<title not found>")(_.text)
-      _ <- Console[F].print(s"[$title]($uri)")
+      result <- ex.eval[F](html, Some(uri))
+      s = result.mkString("\n")
+      _ <- Console[F].print(s)
     yield ExitCode.Success
+
     Async[F].timeout(program.handleErrorWith(printErrorAndExit), 10.seconds)
 
 object Main extends IOApp, Cli[IO]

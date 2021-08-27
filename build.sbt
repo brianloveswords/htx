@@ -1,6 +1,14 @@
 import java.io.File
-import sbtassembly.AssemblyKeys
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+import scala.collection.mutable.ArrayBuilder
 import scala.sys.process._
+import scala.util.control.NonFatal
+
+import org.antlr.v4.{Tool => Antlr4}
+import sbt.nio.Keys._
+import sbtassembly.AssemblyKeys
 
 val scalaVer = "3.0.1"
 
@@ -13,6 +21,7 @@ val v = new {
   val circe = "0.14.1"
   val scalaCheckEffect = "1.0.2"
   val munitCatsEffect = "1.0.3"
+  val antlr4 = "4.9.2"
 }
 
 lazy val operatingSystem = settingKey[OS](
@@ -45,6 +54,7 @@ inThisBuild(
       "io.circe" %% "circe-parser" % v.circe,
       "io.circe" %% "circe-testing" % v.circe,
       "io.circe" %% "circe-yaml" % v.circe,
+      "org.antlr" % "antlr4-runtime" % v.antlr4,
     ),
     libraryDependencies ++= Seq(
       "org.typelevel" %% "munit-cats-effect-3" % v.munitCatsEffect,
@@ -59,9 +69,81 @@ inThisBuild(
 
 name := "htxRoot"
 
+val antlrBuildGrammars = taskKey[Unit](
+  "Run antlr4 on some grammars",
+)
+val antlrClean = taskKey[Unit](
+  "Clean generated antlr4 files",
+)
+val antlrOutputDir = settingKey[File](
+  "Where to stick the java files after they are generated",
+)
+val antlrGrammars = settingKey[Seq[String]](
+  "List of grammars to compile",
+)
+
+lazy val grammar = project
+  .in(file("htx-grammar"))
+  .settings(
+    moduleName := "htx-grammar",
+    resourceDirectory := baseDirectory.value / "src" / "main" / "resources",
+    antlrOutputDir := baseDirectory.value / "src" / "main" / "java",
+    antlrBuildGrammars / fileInputs += (baseDirectory / resourceDirectory).value.toGlob / "*.g4",
+    cleanFiles += antlrOutputDir.value,
+    Compile / compile := (Compile / compile)
+      .dependsOn(antlrBuildGrammars)
+      .value,
+    antlrBuildGrammars := (Def.taskDyn {
+      val pkg = "dev.bjb.htx.grammar"
+      val log = streams.value.log
+      val changes = antlrBuildGrammars.inputFileChanges
+      val updated = (changes.created ++ changes.modified).toSet.size > 0
+
+      def mkArgs(
+          inFile: File,
+          outDir: File,
+          withPkg: Boolean = true,
+      ): Array[String] = {
+        val baseArgs = Array("-Xexact-output-dir", "-visitor")
+        val pkgArgs = if (withPkg) Array("-package", pkg) else Array[String]()
+        val outArgs = Array("-o", outDir.toString)
+        val inArg = Array(inFile.toString)
+        baseArgs ++ pkgArgs ++ outArgs ++ inArg
+      }
+
+      def runAntlr(
+          inFile: File,
+          outDir: File,
+          withPkg: Boolean = true,
+      ): Unit = {
+        val args = mkArgs(inFile, outDir, withPkg)
+        log.info(s"Running Antlr4 with options: ${args.toList}")
+        val antlr = new Antlr4(args)
+        antlr.processGrammarsOnCommandLine()
+        if (antlr.getNumErrors() > 0)
+          throw new MessageOnlyException(s"Antlr4 Failed")
+      }
+
+      val grammars = (antlrBuildGrammars / allInputFiles).value
+
+      if (updated) Def.task {
+        clean.value
+        grammars.foreach { grammar =>
+          val inPath = grammar.toFile
+          val outPath = antlrOutputDir.value
+
+          runAntlr(inPath, outPath / "pkg")
+          runAntlr(inPath, outPath / "nopkg", withPkg = false)
+        }
+      }
+      else Def.task {}
+    }).value,
+  )
+
 lazy val core = project
   .in(file("htx-core"))
   .enablePlugins(JavaAppPackaging, UniversalPlugin)
+  .dependsOn(grammar)
   .settings(
     moduleName := "htx-core",
   )
@@ -113,6 +195,7 @@ lazy val cli = project
     },
     operatingSystem := OS.get,
     upxPath := {
+      // TODO: rewrite all this in terms of `File` and the `/` operator
       val os = operatingSystem.value
       val (sep, suffix) = os match {
         case Windows => ("\\", "exe")
