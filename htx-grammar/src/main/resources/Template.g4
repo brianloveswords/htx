@@ -20,17 +20,12 @@ text:
 
 // lexer
 
-fragment STRING:
-    '"' (STRING_ESC | .)*? '"'
-    | '\'' (STRING_ESC | .)*? '\''
-;
-
 PATTERN:
     '{' (PATTERN_END_ESC | STRING | .)+? '}'
 ;
 
 TEXT:
-    ~('{' | '"' | '\'')+
+    (PATTERN_START_ESC | ~('{' | '"' | '\''))+
 ;
 
 fragment PATTERN_START_ESC:
@@ -46,5 +41,10 @@ fragment STRING_ESC:
     '\\"'
     | '\\\''
     | '\\\\'
+;
+
+fragment STRING:
+    '"' (STRING_ESC | .)*? '"'
+    | '\'' (STRING_ESC | .)*? '\''
 ;
 

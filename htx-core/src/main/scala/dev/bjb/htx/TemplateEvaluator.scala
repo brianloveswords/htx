@@ -5,6 +5,8 @@ import org.antlr.v4.runtime.tree.*
 import dev.bjb.htx.grammar.TemplateParser
 import dev.bjb.htx.grammar.TemplateLexer
 import dev.bjb.htx.grammar.TemplateBaseVisitor
+import scala.collection.mutable.ArrayBuffer
+import scala.jdk.CollectionConverters.*
 
 enum Part:
   case Text(inner: String)
@@ -25,27 +27,37 @@ object TemplateEvaluator:
       ),
     )
     val parts = visitor.visit(parser.template())
-    TemplateEvaluator(parts)
+    TemplateEvaluator(parts.toSeq)
 
 private class TemplateVisitor extends TemplateBaseVisitor[Seq[Part]]:
   import dev.bjb.htx.grammar.TemplateParser.*
 
-  var parts: Seq[Part] = Vector.empty
+  val empty: Seq[Part] = Seq.empty
+  def descend(ctx: ParserRuleContext): Seq[Part] =
+    ctx.children.asScala.toSeq.foldLeft(empty) { (acc, child) =>
+      acc ++ visit(child)
+    }
+
+  def unescape(s: String): String =
+    s.replace("\\{", "{").replace("\\}", "}")
 
   override def visitTemplate(ctx: TemplateContext) =
-    visitChildren(ctx)
+    descend(ctx)
 
   override def visitPart(ctx: PartContext) =
-    parts ++ visitChildren(ctx)
+    descend(ctx)
 
   override def visitPattern(ctx: PatternContext) =
     // drop the { and }
     val inner = ctx.getText().tail.init
-    parts :+ Pattern(inner)
+    Seq(Pattern(inner))
 
   override def visitText(ctx: TextContext) =
-    parts :+ Text(ctx.getText())
+    Seq(Text(unescape(ctx.getText())))
 
-def debugCtx(typ: String, ctx: ParserRuleContext): Unit =
+def pairs(s: String): Iterator[String] =
+  s.sliding(2) ++ List(s.last.toString)
+
+private def debugCtx(typ: String, ctx: ParserRuleContext): Unit =
   val t = ctx.getText
   println(s"visiting $typ with this context $t")
