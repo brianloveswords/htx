@@ -1,5 +1,7 @@
 grammar Template;
-prog: (expr NEWLINE)*;
+import CommonLexerRules;
+
+top: (expr NEWLINE)*;
 expr:
 	expr ('*' | '/') expr
 	| expr ('+' | '-') expr

@@ -20,11 +20,11 @@ class TemplateParserTest extends CommonSuite:
       TemplateParser(_),
       "1+1\n",
     )
-    val tree = parser.prog()
+    val tree = parser.top()
 
     visitor.visit(tree)
     visitor.total
-    assertEquals(visitor.total, 1) //
+    assertEquals(visitor.total, 2) //
   }
 
 class TemplateVisitor extends TemplateBaseVisitor[Int]:
@@ -32,6 +32,6 @@ class TemplateVisitor extends TemplateBaseVisitor[Int]:
 
   var total: Int = 0
 
-  override def visitProg(ctx: ProgContext): Int =
+  override def visitTop(ctx: TopContext): Int =
     total += 1
     total
