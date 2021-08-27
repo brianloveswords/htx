@@ -77,14 +77,18 @@ trait Cli[F[_]](using Console[F])(using Async[F], Parallel[F]):
         if uriArg.startsWith("http") then uriArg else "https://" + uriArg,
       )
       tpl <- extractSecondArg(args)
-      ex = SelectorExtractor(tpl)
+      ex = SelectorExtractor[F](tpl)
       newLine = if includeNewLine(args) then "\n" else ""
-      _ <- Console[F].errorln(s"args: $args")
-      _ <- Console[F].errorln(s"uri: $uri")
-      _ <- Console[F].errorln(s"tpl: $tpl")
+      _ <- sys.env.get("DEBUG").fold(Monad[F].pure(())) { _ =>
+        Console[F].errorln(s"DEBUG: args: $args") *>
+          Console[F].errorln(s"DEBUG: uri: $uri") *>
+          Console[F].errorln(s"DEBUG: tpl: $tpl") *>
+          Console[F].errorln(s"DEBUG: newline: $newLine") *>
+          Console[F].errorln("-" * 72)
+      }
       result <- getHtml(uri)
       (html, uri) = result
-      result <- ex.eval[F](html, Some(uri))
+      result <- ex.eval(html, Some(uri))
       formatted = result.mkString("\n") + newLine
       _ <- Console[F].print(formatted)
     yield ExitCode.Success
