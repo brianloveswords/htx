@@ -137,7 +137,7 @@ lazy val grammar = project
           runAntlr(inPath, outPath / "nopkg", withPkg = false)
         }
       }
-      else Def.task { }
+      else Def.task {}
     }).value,
   )
 
