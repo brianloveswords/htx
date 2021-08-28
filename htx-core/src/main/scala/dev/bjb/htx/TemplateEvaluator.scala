@@ -81,16 +81,16 @@ object TemplateEvaluator:
     apply(input).fold(err => throw err, identity)
 
   def createParser(input: String): TemplateParser =
-    val p = TemplateParser(
+    val parser = TemplateParser(
       CommonTokenStream(
         TemplateLexer(
           CharStreams.fromString(input),
         ),
       ),
     )
-    p.removeErrorListeners
-    p.addErrorListener(TemplateErrorListener())
-    p
+    parser.removeErrorListeners
+    parser.addErrorListener(TemplateErrorListener())
+    parser
 
 sealed trait TemplateParseError extends NoStackTrace
 case object MissingInput extends TemplateParseError:
