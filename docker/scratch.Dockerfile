@@ -1,3 +1,3 @@
 FROM scratch
-COPY htx.linux.static /go
-ENTRYPOINT [ "/go" ]
+COPY htx.amd64.linux.static /htx
+ENTRYPOINT [ "/htx" ]
