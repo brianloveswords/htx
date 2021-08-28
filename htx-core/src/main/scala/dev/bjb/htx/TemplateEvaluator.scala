@@ -78,10 +78,7 @@ object TemplateEvaluator:
   catch { case err: TemplateParseError => Left(err) }
 
   def unsafe(input: String): TemplateEvaluator =
-    val visitor = TemplateVisitor()
-    val parser = createParser(input)
-    val parts = visitor.visit(parser.template())
-    TemplateEvaluator(parts.toSeq)
+    apply(input).fold(err => throw err, identity)
 
   def createParser(input: String): TemplateParser =
     val p = TemplateParser(
