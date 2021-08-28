@@ -1,18 +1,18 @@
 package dev.bjb.htx
 
-import cats.implicits.*
-import cats.data.ValidatedNel
+import cats.Monad
+import cats.Parallel
 import cats.data.Validated.Valid
-import cats.effect.IO
+import cats.data.ValidatedNel
 import cats.effect.Async
 import cats.effect.Concurrent
-import cats.Parallel
-import org.http4s.Uri
-import cats.Monad
-import fs2.Stream
-import io.github.vigoo.prox.ProxFS2
-import fs2.text
+import cats.effect.IO
+import cats.implicits.*
 import fs2.Chunk
+import fs2.Stream
+import fs2.text
+import io.github.vigoo.prox.ProxFS2
+import org.http4s.Uri
 
 case class Evaluator[F[_]: Async](
     key: String,
