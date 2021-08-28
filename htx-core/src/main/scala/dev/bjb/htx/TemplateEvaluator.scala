@@ -14,6 +14,7 @@ import scala.jdk.CollectionConverters.*
 import cats.effect.Async
 import cats.effect.Concurrent
 import cats.Parallel
+import scala.util.control.NoStackTrace
 
 enum Part:
   case Text(inner: String)
@@ -77,8 +78,28 @@ object TemplateEvaluator:
         ),
       ),
     )
+    parser.removeErrorListeners
+    parser.addErrorListener(TemplateErrorListener())
     val parts = visitor.visit(parser.template())
     TemplateEvaluator(parts.toSeq)
+
+case class TemplateParseError(
+    line: Int,
+    charPositionInLine: Int,
+    msg: String,
+) extends NoStackTrace:
+  override def getMessage: String = s"$line:$charPositionInLine: $msg"
+
+private class TemplateErrorListener extends BaseErrorListener:
+  override def syntaxError(
+      recognizer: Recognizer[?, ?],
+      offendingSymbol: Any,
+      line: Int,
+      charPositionInLine: Int,
+      msg: String,
+      e: RecognitionException,
+  ): Unit =
+    throw new TemplateParseError(line, charPositionInLine, msg)
 
 private class TemplateVisitor extends TemplateBaseVisitor[Seq[Part]]:
   import dev.bjb.htx.grammar.TemplateParser.*
