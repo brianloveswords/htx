@@ -3,6 +3,7 @@ package dev.bjb.htx.cli
 import cats.Monad
 import cats.MonadError
 import cats.MonadThrow
+import cats.Parallel
 import cats.effect.*
 import cats.effect.std.*
 import cats.implicits.*
@@ -20,7 +21,6 @@ import java.net.URL
 import scala.concurrent.duration.*
 import scala.util.control.NoStackTrace
 import scala.util.control.NonFatal
-import cats.Parallel
 
 trait Cli[F[_]](using Console[F])(using Async[F], Parallel[F]):
   private val client = JavaNetClientBuilder[F].create
