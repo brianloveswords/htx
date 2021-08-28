@@ -54,7 +54,7 @@ case class SelectorExtractor[F[_]: Async: Concurrent: Parallel](
     if name.endsWith("js") then (s: String) => runScript(name, s)
     else fnMap(name)
 
-  lazy val tpl = TemplateEvaluator(template)
+  lazy val tpl = TemplateEvaluator.unsafe(template)
   lazy val unsafeEvaluators: Set[Evaluator[F]] =
     tpl.patterns
       .filter(_ != "@")

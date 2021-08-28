@@ -15,6 +15,7 @@ import cats.effect.Async
 import cats.effect.Concurrent
 import cats.Parallel
 import scala.util.control.NoStackTrace
+import scala.util.control.NonFatal
 
 enum Part:
   case Text(inner: String)
@@ -69,25 +70,39 @@ case class TemplateEvaluator(parts: Seq[Part]):
     }
 
 object TemplateEvaluator:
-  def apply(input: String): TemplateEvaluator =
+  def apply(input: String): Either[TemplateParseError, TemplateEvaluator] = try
     val visitor = TemplateVisitor()
-    val parser = TemplateParser(
+    val parser = createParser(input)
+    val parts = visitor.visit(parser.template())
+    Right(TemplateEvaluator(parts))
+  catch { case err: TemplateParseError => Left(err) }
+
+  def unsafe(input: String): TemplateEvaluator =
+    val visitor = TemplateVisitor()
+    val parser = createParser(input)
+    val parts = visitor.visit(parser.template())
+    TemplateEvaluator(parts.toSeq)
+
+  def createParser(input: String): TemplateParser =
+    val p = TemplateParser(
       CommonTokenStream(
         TemplateLexer(
           CharStreams.fromString(input),
         ),
       ),
     )
-    parser.removeErrorListeners
-    parser.addErrorListener(TemplateErrorListener())
-    val parts = visitor.visit(parser.template())
-    TemplateEvaluator(parts.toSeq)
+    p.removeErrorListeners
+    p.addErrorListener(TemplateErrorListener())
+    p
 
-case class TemplateParseError(
+sealed trait TemplateParseError extends NoStackTrace
+case object MissingInput extends TemplateParseError:
+  override def getMessage: String = s"cannot parse empty input"
+case class ParseInputError(
     line: Int,
     charPositionInLine: Int,
     msg: String,
-) extends NoStackTrace:
+) extends TemplateParseError:
   override def getMessage: String = s"$line:$charPositionInLine: $msg"
 
 private class TemplateErrorListener extends BaseErrorListener:
@@ -99,7 +114,7 @@ private class TemplateErrorListener extends BaseErrorListener:
       msg: String,
       e: RecognitionException,
   ): Unit =
-    throw new TemplateParseError(line, charPositionInLine, msg)
+    throw new ParseInputError(line, charPositionInLine, msg)
 
 private class TemplateVisitor extends TemplateBaseVisitor[Seq[Part]]:
   import dev.bjb.htx.grammar.TemplateParser.*
@@ -114,6 +129,7 @@ private class TemplateVisitor extends TemplateBaseVisitor[Seq[Part]]:
     .replace("\\{", "{")
     .replace("\\}", "}")
     .replace("\\n", "\n")
+    .replace("\\t", "\t")
 
   override def visitTemplate(ctx: TemplateContext) =
     descend(ctx)
