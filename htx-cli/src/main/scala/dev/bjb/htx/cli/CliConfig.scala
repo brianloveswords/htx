@@ -4,10 +4,15 @@ import org.http4s.Uri
 import scopt.OParser
 import scopt.Read
 
+enum InputType:
+  case Link(uri: Uri)
+  case StdinContent
+  case StdinLinks
+
 case class CliConfigRaw(
     num: Option[Int] = None,
     uri: Option[Uri] = None,
-    kwargs: Map[String, String] = Map.empty,
+    template: Option[String] = None,
 )
 
 given Read[Uri] = Read.reads { s =>

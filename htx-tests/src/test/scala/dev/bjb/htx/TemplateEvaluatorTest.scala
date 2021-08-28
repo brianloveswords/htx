@@ -3,7 +3,13 @@ package dev.bjb.htx
 import org.antlr.v4.runtime.*
 import cats.effect.IO
 
-class TemplateParserTest extends CommonSuite:
+class TemplateEvaluatorTest extends CommonSuite:
+  test("empty string") {
+    val parser = TemplateEvaluator("")
+    assertEquals(parser.parts, Seq(Text("")))
+    assertEquals(parser.patterns, Set())
+  }
+
   test("1 part, all text") {
     val parser = TemplateEvaluator("oh hello")
     assertEquals(parser.parts, Seq(Text("oh hello")))

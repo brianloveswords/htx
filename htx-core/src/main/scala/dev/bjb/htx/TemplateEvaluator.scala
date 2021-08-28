@@ -107,9 +107,6 @@ private class TemplateVisitor extends TemplateBaseVisitor[Seq[Part]]:
   override def visitText(ctx: TextContext) =
     Seq(Text(unescape(ctx.getText())))
 
-def pairs(s: String): Iterator[String] =
-  s.sliding(2) ++ List(s.last.toString)
-
 private def debugCtx(typ: String, ctx: ParserRuleContext): Unit =
   val t = ctx.getText
   println(s"visiting $typ with this context $t")

@@ -23,17 +23,26 @@ class CliConfigTest extends CommonSuite:
         .text(
           "URI to pull contents. - for contents on stdin; @ for URIs",
         ),
+      arg[String]("<template>")
+        .action((template, c) => c.copy(template = Some(template)))
+        .text(
+          "URI to pull contents. - for contents on stdin; @ for URIs",
+        ),
+      checkConfig { c =>
+        if c.uri.isEmpty then failure("uri must be set")
+        else success
+      },
     )
 
-  test("hello") {
-    val args = Seq("--num", "1", "example")
+  test("works with a full url and static template") {
+    val args = Seq("example")
     val (result, effects) =
       OParser.runParser(parser1, args, CliConfigRaw())
-    result.foreach { config =>
-      config.uri.foreach { uri =>
-        println(uri.toString)
-      }
-    }
-    println(effects)
+
+    for config <- result
+    yield println(config)
+
+    OParser.runEffects(effects)
+
     assert(true)
   }
