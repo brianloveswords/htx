@@ -114,7 +114,7 @@ private class TemplateErrorListener extends BaseErrorListener:
     throw new ParseInputError(line, charPositionInLine, msg)
 
 private class TemplateVisitor extends TemplateBaseVisitor[Seq[Part]]:
-  import dev.bjb.htx.grammar.TemplateParser.*
+  import grammar.TemplateParser.*
 
   val empty: Seq[Part] = Seq.empty
   def descend(ctx: ParserRuleContext): Seq[Part] =
