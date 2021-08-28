@@ -1,5 +1,8 @@
 package dev.bjb.htx
 
+import cats.Parallel
+import cats.effect.Async
+import cats.effect.Concurrent
 import cats.effect.IO
 import cats.implicits.*
 import dev.bjb.htx.grammar.TemplateBaseVisitor
@@ -11,9 +14,6 @@ import org.antlr.v4.runtime.tree.*
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration.*
 import scala.jdk.CollectionConverters.*
-import cats.effect.Async
-import cats.effect.Concurrent
-import cats.Parallel
 import scala.util.control.NoStackTrace
 import scala.util.control.NonFatal
 
