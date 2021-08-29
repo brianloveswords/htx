@@ -24,7 +24,7 @@ case class CliConfigRaw(
 )
 
 case class CliConfig(
-    max: Int,
+    mode: Mode,
     input: Input,
     template: TemplateEvaluator,
 )
@@ -61,7 +61,11 @@ object CliConfigRaw:
         else success
       },
     )
-    val (result, effects) = OParser.runParser(p, args, CliConfigRaw())
+    // scopt doesn't seem to play well with args that are a single '-', so we
+    // convert it to something else before parsing.
+    val fixedArgs = args.map(s => if s == "-" then "%" else s)
+
+    val (result, effects) = OParser.runParser(p, fixedArgs, CliConfigRaw())
     result match
       case Some(config) => Right(config)
       case _            => Left(ArgumentsError(getMessage(effects)))
@@ -90,8 +94,8 @@ object CliConfigRaw:
 
 given Read[Input] = Read.reads { s =>
   s match
-    case "-" => Input.StdinContent
-    case "@" => Input.StdinLinks
+    case "%" | "-" => Input.StdinContent
+    case "@"       => Input.StdinLinks
     case uri =>
       val uri = summon[Read[Uri]].reads(s)
       Input.Link(uri)

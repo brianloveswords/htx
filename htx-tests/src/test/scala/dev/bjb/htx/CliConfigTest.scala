@@ -28,3 +28,25 @@ class CliConfigTest extends CommonSuite:
     val result = CliConfigRaw.parse(args).fold(throw _, identity)
     assertEquals(result, expected)
   }
+
+  test("content from stdin") {
+    val args = Seq("-", "{a}")
+    val expected = CliConfigRaw(
+      Mode.Single,
+      Some(Input.StdinContent),
+      Some(TemplateEvaluator(List(Part.Pattern("a")))),
+    )
+    val result = CliConfigRaw.parse(args).fold(throw _, identity)
+    assertEquals(result, expected)
+  }
+
+  test("links from stdin") {
+    val args = Seq("@", "{a}")
+    val expected = CliConfigRaw(
+      Mode.Single,
+      Some(Input.StdinLinks),
+      Some(TemplateEvaluator(List(Part.Pattern("a")))),
+    )
+    val result = CliConfigRaw.parse(args).fold(throw _, identity)
+    assertEquals(result, expected)
+  }
