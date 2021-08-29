@@ -77,6 +77,10 @@ object CliConfigRaw:
     OParser.runEffects(
       effects,
       new DefaultOEffectSetup {
+        // for certain situations (e.g. --help), effects will continue even
+        // after termination. we don't want those effects to be included in
+        // the final message, so we keep track of liveness and stop appending
+        // when terminate has been called
         var live = true
         override def displayToOut(msg: String): Unit =
           if live then message += msg + "\n"
@@ -88,7 +92,6 @@ object CliConfigRaw:
           displayToErr("Warning: " + msg)
         override def terminate(exitState: Either[String, Unit]): Unit =
           live = false
-          ()
       },
     )
     message
