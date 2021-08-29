@@ -9,7 +9,7 @@ class CliConfigTest extends CommonSuite:
     val args = Seq("https://example.com", "{@}")
     val uri = Uri.unsafeFromString("https://example.com")
     val expected = CliConfig(
-      Mode.Single,
+      Mode.All,
       Input.Link(uri),
       TemplateEvaluator(List(Part.Pattern("@"))),
     )
@@ -32,7 +32,7 @@ class CliConfigTest extends CommonSuite:
   test("content from stdin") {
     val args = Seq("-", "{a}")
     val expected = CliConfig(
-      Mode.Single,
+      Mode.All,
       Input.StdinContent,
       TemplateEvaluator(List(Part.Pattern("a"))),
     )
@@ -43,7 +43,7 @@ class CliConfigTest extends CommonSuite:
   test("links from stdin") {
     val args = Seq("@", "{a}")
     val expected = CliConfig(
-      Mode.Single,
+      Mode.All,
       Input.StdinLinks,
       TemplateEvaluator(List(Part.Pattern("a"))),
     )

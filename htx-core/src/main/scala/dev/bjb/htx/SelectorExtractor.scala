@@ -14,6 +14,10 @@ import fs2.text
 import io.github.vigoo.prox.ProxFS2
 import org.http4s.Uri
 
+enum Mode:
+  case All
+  case Max(k: Int)
+
 case class Evaluator[F[_]: Async](
     key: String,
     selector: Selector,
@@ -75,15 +79,21 @@ case class SelectorExtractor[F[_]: Async: Concurrent: Parallel](
   def eval(
       html: String,
       uri: Option[Uri] = None,
+      mode: Mode = Mode.All,
   ): F[List[String]] =
     val soup = PureSoup(html)
     val autoVars: Map[String, List[String]] =
       uri.map(u => Map("@" -> List(u.toString))).getOrElse(Map.empty)
 
+    val extract = mode match
+      case Mode.All    => soup.extract
+      case Mode.Max(1) => (sel: Selector) => soup.extractFirst(sel).toList
+      case Mode.Max(k) => (sel: Selector) => soup.extract(sel).take(k)
+
     unsafeEvaluators
       .map { evaluator =>
         val Evaluator(key, selector, fn) = evaluator
-        Async[F].delay(soup.extract(selector).map(_.text)) flatMap { extracts =>
+        Async[F].delay(extract(selector).map(_.text)) flatMap { extracts =>
           if extracts.sizeIs == 0 then
             Async[F].pure(key, List(s"<missing: $key>"))
           else extracts.map(fn).parSequence.map(ex => key -> ex)

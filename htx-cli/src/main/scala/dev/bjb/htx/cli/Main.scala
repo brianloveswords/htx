@@ -19,9 +19,9 @@ import org.typelevel.ci.*
 
 import java.net.URL
 import scala.concurrent.duration.*
+import scala.io.Source
 import scala.util.control.NoStackTrace
 import scala.util.control.NonFatal
-import scala.io.Source
 
 trait Cli[F[_]](using Console[F])(using Async[F], Parallel[F]):
   private val client = JavaNetClientBuilder[F].create
@@ -107,7 +107,9 @@ trait Cli[F[_]](using Console[F])(using Async[F], Parallel[F]):
         ).mkString("\n")
         Console[F].errorln(message)
       }
-      result <- getHtml(input) flatMap ex.eval
+      result <- getHtml(input) flatMap { (html, uri) =>
+        ex.eval(html, uri, mode)
+      }
       formatted = result.mkString("\n") + newLine
       _ <- Console[F].print(formatted)
     yield ExitCode.Success

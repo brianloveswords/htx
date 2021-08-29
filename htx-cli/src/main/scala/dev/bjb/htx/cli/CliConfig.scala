@@ -1,6 +1,7 @@
 package dev.bjb.htx.cli
 
 import dev.bjb.htx.TemplateEvaluator
+import dev.bjb.htx.Mode
 import org.http4s.Uri
 import scopt.DefaultOEffectSetup
 import scopt.OEffect
@@ -14,12 +15,8 @@ enum Input:
   case StdinContent
   case StdinLinks
 
-enum Mode:
-  case Single
-  case Max(k: Int)
-
 case class CliConfigRaw(
-    mode: Mode = Mode.Single,
+    mode: Mode = Mode.All,
     input: Option[Input] = None,
     template: Option[TemplateEvaluator] = None,
 ):
