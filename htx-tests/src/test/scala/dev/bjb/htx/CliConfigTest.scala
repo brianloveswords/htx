@@ -6,7 +6,7 @@ import org.http4s.Uri
 
 class CliConfigTest extends CommonSuite:
   test("full url, template, no mode") {
-    val args = Seq("https://example.com", "{@}")
+    val args = Seq("{@}", "https://example.com")
     val uri = Uri.unsafeFromString("https://example.com")
     val expected = CliConfig(
       Mode.All,
@@ -18,7 +18,7 @@ class CliConfigTest extends CommonSuite:
   }
 
   test("partial url, template, and mode") {
-    val args = Seq("example.com", "{@}", "-k", "10")
+    val args = Seq("{@}", "example.com", "-k", "10")
     val uri = Uri.unsafeFromString("https://example.com")
     val expected = CliConfig(
       Mode.Max(10),
@@ -30,7 +30,7 @@ class CliConfigTest extends CommonSuite:
   }
 
   test("content from stdin") {
-    val args = Seq("-", "{a}")
+    val args = Seq("{a}")
     val expected = CliConfig(
       Mode.All,
       Input.StdinContent,
@@ -41,7 +41,7 @@ class CliConfigTest extends CommonSuite:
   }
 
   test("links from stdin") {
-    val args = Seq("@", "{a}")
+    val args = Seq("{a}", "@")
     val expected = CliConfig(
       Mode.All,
       Input.StdinLinks,

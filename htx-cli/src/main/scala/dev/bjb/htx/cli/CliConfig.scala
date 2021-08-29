@@ -17,15 +17,13 @@ enum Input:
 
 case class CliConfigRaw(
     mode: Mode = Mode.All,
-    input: Option[Input] = None,
+    input: Input = Input.StdinContent,
     template: Option[TemplateEvaluator] = None,
 ):
   def unsafeFinalize: CliConfig =
     CliConfig(
       mode = mode,
-      input = input.getOrElse(
-        throw new IllegalArgumentException("No input specified"),
-      ),
+      input = input,
       template = template.getOrElse(
         throw new IllegalArgumentException("No template specified"),
       ),
@@ -54,21 +52,18 @@ object CliConfig:
         }
         .action((k, c) => c.copy(mode = Mode.Max(k)))
         .text("How many matches to return. When not set, it is unlimited"),
-      arg[Input]("<uri>")
-        .action((input, c) => c.copy(input = Some(input)))
-        .text(
-          "URI to pull contents. - for contents on stdin; @ for URIs",
-        ),
       arg[TemplateEvaluator]("<template>")
         .action((template, c) => c.copy(template = Some(template)))
         .text(
           "extraction template. Format: {<css> [ |> fn1 |> fn2 ] }",
         ),
+      arg[Input]("[uri]")
+        .optional()
+        .action((input, c) => c.copy(input = input))
+        .text(
+          "URI to pull contents. When not set, will read from stdin",
+        ),
       help("help").text("prints this usage text"),
-      checkConfig { c =>
-        if c.input.isEmpty then failure("uri must be set")
-        else success
-      },
     )
     // scopt doesn't seem to play well with args that are a single '-', so we
     // convert it to something else before parsing.
