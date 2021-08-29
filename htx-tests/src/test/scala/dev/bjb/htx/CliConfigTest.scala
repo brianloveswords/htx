@@ -5,9 +5,26 @@ import scopt.OParser
 import org.http4s.Uri
 
 class CliConfigTest extends CommonSuite:
-  test("works with a full url and static template") {
-    val args = Seq("example", "{@")
-    val result = CliConfigRaw.parse(args)
-    println(result)
-    assert(true)
+  test("full url, template, no mode") {
+    val args = Seq("https://example.com", "{@}")
+    val uri = Uri.unsafeFromString("https://example.com")
+    val expected = CliConfigRaw(
+      Mode.Single,
+      Some(Input.Link(uri)),
+      Some(TemplateEvaluator(List(Part.Pattern("@")))),
+    )
+    val result = CliConfigRaw.parse(args).fold(throw _, identity)
+    assertEquals(result, expected)
+  }
+
+  test("partial url, template, and mode") {
+    val args = Seq("example.com", "{@}", "-k", "10")
+    val uri = Uri.unsafeFromString("https://example.com")
+    val expected = CliConfigRaw(
+      Mode.Max(10),
+      Some(Input.Link(uri)),
+      Some(TemplateEvaluator(List(Part.Pattern("@")))),
+    )
+    val result = CliConfigRaw.parse(args).fold(throw _, identity)
+    assertEquals(result, expected)
   }

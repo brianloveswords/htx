@@ -8,15 +8,25 @@ import scala.util.control.NoStackTrace
 import scopt.DefaultOEffectSetup
 import scopt.OEffect
 
-enum InputType:
+enum Input:
   case Link(uri: Uri)
   case StdinContent
   case StdinLinks
 
+enum Mode:
+  case Single
+  case Max(k: Int)
+
 case class CliConfigRaw(
-    num: Option[Int] = None,
-    uri: Option[Uri] = None,
+    mode: Mode = Mode.Single,
+    input: Option[Input] = None,
     template: Option[TemplateEvaluator] = None,
+)
+
+case class CliConfig(
+    max: Int,
+    input: Input,
+    template: TemplateEvaluator,
 )
 
 case class ArgumentsError(msg: String) extends NoStackTrace:
@@ -29,15 +39,15 @@ object CliConfigRaw:
     val p = OParser.sequence(
       programName("htx"),
       head("htx", "1.0.0"),
-      opt[Int]('k', "num")
+      opt[Int]('k', "max")
         .validate { k =>
           if k > 0 then success
-          else failure("num must be >0")
+          else failure("max must be >0")
         }
-        .action((k, c) => c.copy(num = Some(k)))
+        .action((k, c) => c.copy(mode = Mode.Max(k)))
         .text("How many matches to return. When not set, it is unlimited"),
-      arg[Uri]("<uri>")
-        .action((uri, c) => c.copy(uri = Some(uri)))
+      arg[Input]("<uri>")
+        .action((input, c) => c.copy(input = Some(input)))
         .text(
           "URI to pull contents. - for contents on stdin; @ for URIs",
         ),
@@ -47,7 +57,7 @@ object CliConfigRaw:
           "extraction template. Format: {<css> [ |> fn1 |> fn2 ] }",
         ),
       checkConfig { c =>
-        if c.uri.isEmpty then failure("uri must be set")
+        if c.input.isEmpty then failure("uri must be set")
         else success
       },
     )
@@ -73,6 +83,19 @@ object CliConfigRaw:
       },
     )
     message
+
+//
+// Read instances
+//
+
+given Read[Input] = Read.reads { s =>
+  s match
+    case "-" => Input.StdinContent
+    case "@" => Input.StdinLinks
+    case uri =>
+      val uri = summon[Read[Uri]].reads(s)
+      Input.Link(uri)
+}
 
 given Read[Uri] = Read.reads { s =>
   val base =
