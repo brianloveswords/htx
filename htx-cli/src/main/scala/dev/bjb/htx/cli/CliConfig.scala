@@ -1,12 +1,13 @@
 package dev.bjb.htx.cli
 
-import org.http4s.Uri
-import scopt.OParser
-import scopt.Read
 import dev.bjb.htx.TemplateEvaluator
-import scala.util.control.NoStackTrace
+import org.http4s.Uri
 import scopt.DefaultOEffectSetup
 import scopt.OEffect
+import scopt.OParser
+import scopt.Read
+
+import scala.util.control.NoStackTrace
 
 enum Input:
   case Link(uri: Uri)
@@ -56,6 +57,7 @@ object CliConfigRaw:
         .text(
           "extraction template. Format: {<css> [ |> fn1 |> fn2 ] }",
         ),
+      help("help").text("prints this usage text"),
       checkConfig { c =>
         if c.input.isEmpty then failure("uri must be set")
         else success
@@ -75,15 +77,18 @@ object CliConfigRaw:
     OParser.runEffects(
       effects,
       new DefaultOEffectSetup {
+        var live = true
         override def displayToOut(msg: String): Unit =
-          message += msg + "\n"
+          if live then message += msg + "\n"
         override def displayToErr(msg: String): Unit =
-          message += msg + "\n"
+          if live then message += msg + "\n"
         override def reportError(msg: String): Unit =
           displayToErr("Error: " + msg)
         override def reportWarning(msg: String): Unit =
           displayToErr("Warning: " + msg)
-        override def terminate(exitState: Either[String, Unit]): Unit = ()
+        override def terminate(exitState: Either[String, Unit]): Unit =
+          live = false
+          ()
       },
     )
     message

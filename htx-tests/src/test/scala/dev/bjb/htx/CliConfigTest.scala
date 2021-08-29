@@ -50,3 +50,15 @@ class CliConfigTest extends CommonSuite:
     val result = CliConfigRaw.parse(args).fold(throw _, identity)
     assertEquals(result, expected)
   }
+
+  test("help") {
+    val args = Seq("--help")
+    val result = CliConfigRaw
+      .parse(args)
+      .fold(identity, v => throw new Exception(s"unexpected result: $v"))
+    val message = result.getMessage
+    val containsUsage = message.contains("Usage:")
+    val doesNotContainError = !message.contains("Error:")
+    assert(containsUsage)
+    assert(doesNotContainError)
+  }
