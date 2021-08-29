@@ -17,6 +17,7 @@ enum Input:
 
 case class CliConfigRaw(
     mode: Mode = Mode.All,
+    includeNewline: Boolean = true,
     input: Input = Input.StdinContent,
     template: Option[TemplateEvaluator] = None,
 ):
@@ -24,6 +25,7 @@ case class CliConfigRaw(
     CliConfig(
       mode = mode,
       input = input,
+      includeNewline = includeNewline,
       template = template.getOrElse(
         throw new IllegalArgumentException("No template specified"),
       ),
@@ -32,6 +34,7 @@ case class CliConfigRaw(
 case class CliConfig(
     mode: Mode,
     input: Input,
+    includeNewline: Boolean,
     template: TemplateEvaluator,
 )
 
@@ -45,6 +48,7 @@ object CliConfig:
     val p = OParser.sequence(
       programName("htx"),
       head("htx", "1.0.0"),
+      // Options
       opt[Int]('k', "max")
         .validate { k =>
           if k > 0 then success
@@ -52,6 +56,10 @@ object CliConfig:
         }
         .action((k, c) => c.copy(mode = Mode.Max(k)))
         .text("How many matches to return. When not set, it is unlimited"),
+      opt[Unit]('n', "no-newline")
+        .action((_, c) => c.copy(includeNewline = false))
+        .text("Don't include newline at end of output"),
+      // Arguments
       arg[TemplateEvaluator]("<template>")
         .action((template, c) => c.copy(template = Some(template)))
         .text(

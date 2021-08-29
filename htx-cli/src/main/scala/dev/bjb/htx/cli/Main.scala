@@ -66,9 +66,7 @@ trait Cli[F[_]](using Console[F])(using Async[F], Parallel[F]):
                 .fold(error)(_.pure)
                 .flatMap(loc =>
                   if loc.startsWith("https://") then parseUri(loc)
-                  // TODO: this does not work right: need to check if loc is
-                  // relative or absolute and then combine it accordingly
-                  else parseUri(uri.toString + loc),
+                  uri.withPath(Uri.Path.unsafeFromString(loc)).pure,
                 )
                 .flatTap(showRedirect)
                 .flatMap(uri => getHtml(Input.Link(uri)))
@@ -94,23 +92,24 @@ trait Cli[F[_]](using Console[F])(using Async[F], Parallel[F]):
       mode = config.mode
       input = config.input
       template = config.template
-      ex = SelectorExtractor[F](template)
-      newLine = if includeNewLine(args) then "\n" else ""
+      includeNewline = config.includeNewline
+      newline = if includeNewline then "\n" else ""
+      extractor = SelectorExtractor[F](template)
       _ <- sys.env.get("DEBUG").fold(Monad[F].pure(())) { _ =>
         val message = Seq(
           s"DEBUG: args: $args",
           s"DEBUG: mode: $mode",
           s"DEBUG: input: $input",
           s"DEBUG: template: $template",
-          s"DEBUG: newline: $newLine",
+          s"DEBUG: newline: $includeNewline",
           "-" * 72,
         ).mkString("\n")
         Console[F].errorln(message)
       }
       result <- getHtml(input) flatMap { (html, uri) =>
-        ex.eval(html, uri, mode)
+        extractor.eval(html, uri, mode)
       }
-      formatted = result.mkString("\n") + newLine
+      formatted = result.mkString("\n") + newline
       _ <- Console[F].print(formatted)
     yield ExitCode.Success
 
