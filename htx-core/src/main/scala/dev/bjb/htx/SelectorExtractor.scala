@@ -30,7 +30,7 @@ def id[F[_]: Async]: String => F[String] =
   (s: String) => Async[F].pure(s)
 
 case class SelectorExtractor[F[_]: Async: Concurrent: Parallel](
-    template: String,
+    template: TemplateEvaluator,
 ):
   val fnMap: Map[String, String => F[String]] = Map(
     "upper" -> (s => s.toUpperCase.pure[F]),
@@ -54,9 +54,8 @@ case class SelectorExtractor[F[_]: Async: Concurrent: Parallel](
     if name.endsWith("js") then (s: String) => runScript(name, s)
     else fnMap(name)
 
-  lazy val tpl = TemplateEvaluator.unsafe(template)
   lazy val unsafeEvaluators: Set[Evaluator[F]] =
-    tpl.patterns
+    template.patterns
       .filter(_ != "@")
       .map(key => {
         if key.contains("|>") then
@@ -69,7 +68,7 @@ case class SelectorExtractor[F[_]: Async: Concurrent: Parallel](
       })
 
   lazy val empty: ValidatedNel[Throwable, Set[Selector]] = Set().validNel
-  lazy val validatedSelectors = tpl.patterns.foldLeft(empty)((acc, p) =>
+  lazy val validatedSelectors = template.patterns.foldLeft(empty)((acc, p) =>
     acc.combine(Selector(p).toValidatedNel.map(Set(_))),
   )
 
@@ -93,4 +92,4 @@ case class SelectorExtractor[F[_]: Async: Concurrent: Parallel](
       .toList
       .parSequence
       .map(_.toMap ++ autoVars)
-      .flatMap(tpl.eval(_))
+      .flatMap(template.eval(_))
