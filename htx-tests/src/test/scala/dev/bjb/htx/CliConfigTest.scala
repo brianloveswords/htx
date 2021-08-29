@@ -8,52 +8,52 @@ class CliConfigTest extends CommonSuite:
   test("full url, template, no mode") {
     val args = Seq("https://example.com", "{@}")
     val uri = Uri.unsafeFromString("https://example.com")
-    val expected = CliConfigRaw(
+    val expected = CliConfig(
       Mode.Single,
-      Some(Input.Link(uri)),
-      Some(TemplateEvaluator(List(Part.Pattern("@")))),
+      Input.Link(uri),
+      TemplateEvaluator(List(Part.Pattern("@"))),
     )
-    val result = CliConfigRaw.parse(args).fold(throw _, identity)
+    val result = CliConfig.parse(args).fold(throw _, identity)
     assertEquals(result, expected)
   }
 
   test("partial url, template, and mode") {
     val args = Seq("example.com", "{@}", "-k", "10")
     val uri = Uri.unsafeFromString("https://example.com")
-    val expected = CliConfigRaw(
+    val expected = CliConfig(
       Mode.Max(10),
-      Some(Input.Link(uri)),
-      Some(TemplateEvaluator(List(Part.Pattern("@")))),
+      Input.Link(uri),
+      TemplateEvaluator(List(Part.Pattern("@"))),
     )
-    val result = CliConfigRaw.parse(args).fold(throw _, identity)
+    val result = CliConfig.parse(args).fold(throw _, identity)
     assertEquals(result, expected)
   }
 
   test("content from stdin") {
     val args = Seq("-", "{a}")
-    val expected = CliConfigRaw(
+    val expected = CliConfig(
       Mode.Single,
-      Some(Input.StdinContent),
-      Some(TemplateEvaluator(List(Part.Pattern("a")))),
+      Input.StdinContent,
+      TemplateEvaluator(List(Part.Pattern("a"))),
     )
-    val result = CliConfigRaw.parse(args).fold(throw _, identity)
+    val result = CliConfig.parse(args).fold(throw _, identity)
     assertEquals(result, expected)
   }
 
   test("links from stdin") {
     val args = Seq("@", "{a}")
-    val expected = CliConfigRaw(
+    val expected = CliConfig(
       Mode.Single,
-      Some(Input.StdinLinks),
-      Some(TemplateEvaluator(List(Part.Pattern("a")))),
+      Input.StdinLinks,
+      TemplateEvaluator(List(Part.Pattern("a"))),
     )
-    val result = CliConfigRaw.parse(args).fold(throw _, identity)
+    val result = CliConfig.parse(args).fold(throw _, identity)
     assertEquals(result, expected)
   }
 
   test("help") {
     val args = Seq("--help")
-    val result = CliConfigRaw
+    val result = CliConfig
       .parse(args)
       .fold(identity, v => throw new Exception(s"unexpected result: $v"))
     val message = result.getMessage

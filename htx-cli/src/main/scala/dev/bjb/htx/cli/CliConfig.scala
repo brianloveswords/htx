@@ -22,7 +22,17 @@ case class CliConfigRaw(
     mode: Mode = Mode.Single,
     input: Option[Input] = None,
     template: Option[TemplateEvaluator] = None,
-)
+):
+  def unsafeFinalize: CliConfig =
+    CliConfig(
+      mode = mode,
+      input = input.getOrElse(
+        throw new IllegalArgumentException("No input specified"),
+      ),
+      template = template.getOrElse(
+        throw new IllegalArgumentException("No template specified"),
+      ),
+    )
 
 case class CliConfig(
     mode: Mode,
@@ -33,9 +43,9 @@ case class CliConfig(
 case class ArgumentsError(msg: String) extends NoStackTrace:
   override def getMessage: String = msg
 
-object CliConfigRaw:
+object CliConfig:
   val builder = OParser.builder[CliConfigRaw]
-  def parse(args: Seq[String]): Either[ArgumentsError, CliConfigRaw] =
+  def parse(args: Seq[String]): Either[ArgumentsError, CliConfig] =
     import builder.*
     val p = OParser.sequence(
       programName("htx"),
@@ -69,7 +79,7 @@ object CliConfigRaw:
 
     val (result, effects) = OParser.runParser(p, fixedArgs, CliConfigRaw())
     result match
-      case Some(config) => Right(config)
+      case Some(config) => Right(config.unsafeFinalize)
       case _            => Left(ArgumentsError(getMessage(effects)))
 
   def getMessage(effects: List[OEffect]): String =
