@@ -3,6 +3,7 @@ package dev.bjb.htx.cli
 import cats.Monad
 import cats.MonadError
 import cats.MonadThrow
+import cats.Parallel
 import cats.effect.*
 import cats.effect.std.*
 import cats.implicits.*
@@ -18,9 +19,9 @@ import org.typelevel.ci.*
 
 import java.net.URL
 import scala.concurrent.duration.*
+import scala.io.Source
 import scala.util.control.NoStackTrace
 import scala.util.control.NonFatal
-import cats.Parallel
 
 trait Cli[F[_]](using Console[F])(using Async[F], Parallel[F]):
   private val client = JavaNetClientBuilder[F].create
@@ -50,42 +51,65 @@ trait Cli[F[_]](using Console[F])(using Async[F], Parallel[F]):
   private def includeNewLine(args: List[String]): Boolean =
     !args.contains("-n")
 
-  private def getHtml(uri: Uri): F[(String, Uri)] =
-    client.get(uri) { resp =>
-      resp.status match
-        case Status.Ok => resp.as[String].map((_, uri))
-        case Status.MovedPermanently =>
-          val headers = resp.headers
-          lazy val error: F[String] = MissingLocationHeader.raise(uri, headers)
-          getLocationHeader(headers)
-            .fold(error)(_.pure)
-            .flatMap(loc =>
-              if loc.startsWith("https://") then parseUri(loc)
-              // TODO: this does not work right: need to check if loc is
-              // relative or absolute and then combine it accordingly
-              else parseUri(uri.toString + loc),
-            )
-            .flatTap(showRedirect)
-            .flatMap(getHtml)
-        case status => MonadThrow[F].raiseError(UnexpectedStatus(uri, status))
-    }
+  private def getHtml(input: Input): F[(String, Option[Uri])] =
+    import Input.*
+    input match
+      case Link(uri) =>
+        client.get(uri) { resp =>
+          resp.status match
+            case Status.Ok => resp.as[String].map((_, Some(uri)))
+            case Status.MovedPermanently =>
+              val headers = resp.headers
+              lazy val error: F[String] =
+                MissingLocationHeader.raise(uri, headers)
+              getLocationHeader(headers)
+                .fold(error)(_.pure)
+                .flatMap(loc =>
+                  if loc.startsWith("https://") then parseUri(loc)
+                  uri.withPath(Uri.Path.unsafeFromString(loc)).pure,
+                )
+                .flatTap(showRedirect)
+                .flatMap(uri => getHtml(Input.Link(uri)))
+            case status =>
+              MonadThrow[F].raiseError(UnexpectedStatus(uri, status))
+        }
+      case StdinContent =>
+        Source
+          .fromInputStream(System.in)
+          .getLines
+          .mkString("\n")
+          .pure
+          .map((_, None))
+      case StdinLinks =>
+        throw new NotImplementedError("stdin links not implemented yet")
+
+  def getConfig(args: List[String]): F[CliConfig] =
+    CliConfig.parse(args).fold(MonadThrow[F].raiseError, _.pure)
 
   def run(args: List[String]): F[ExitCode] =
     val program = for
-      uriArg <- extractFirstArg(args)
-      uri <- parseUri(
-        if uriArg.startsWith("http") then uriArg else "https://" + uriArg,
-      )
-      tpl <- extractSecondArg(args)
-      ex = SelectorExtractor(tpl)
-      newLine = if includeNewLine(args) then "\n" else ""
-      _ <- Console[F].errorln(s"args: $args")
-      _ <- Console[F].errorln(s"uri: $uri")
-      _ <- Console[F].errorln(s"tpl: $tpl")
-      result <- getHtml(uri)
-      (html, uri) = result
-      result <- ex.eval[F](html, Some(uri))
-      formatted = result.mkString("\n") + newLine
+      config <- getConfig(args)
+      mode = config.mode
+      input = config.input
+      template = config.template
+      includeNewline = config.includeNewline
+      newline = if includeNewline then "\n" else ""
+      extractor = SelectorExtractor[F](template)
+      _ <- sys.env.get("DEBUG").fold(Monad[F].pure(())) { _ =>
+        val message = Seq(
+          s"DEBUG: args: $args",
+          s"DEBUG: mode: $mode",
+          s"DEBUG: input: $input",
+          s"DEBUG: template: $template",
+          s"DEBUG: newline: $includeNewline",
+          "-" * 72,
+        ).mkString("\n")
+        Console[F].errorln(message)
+      }
+      result <- getHtml(input) flatMap { (html, uri) =>
+        extractor.eval(html, uri, mode)
+      }
+      formatted = result.mkString("\n") + newline
       _ <- Console[F].print(formatted)
     yield ExitCode.Success
 

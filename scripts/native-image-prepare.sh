@@ -8,4 +8,5 @@ OUTPUT_MODE=output
 
 java -agentlib:native-image-agent=config-$OUTPUT_MODE-dir=$CONFIG_PATH \
     -jar $ASSEMBLY_JAR \
-    https://example.com "{title}: {@}"
+    "{ title |> upper.js }: {@}" \
+    https://example.com

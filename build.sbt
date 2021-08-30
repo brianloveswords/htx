@@ -22,6 +22,8 @@ val v = new {
   val scalaCheckEffect = "1.0.2"
   val munitCatsEffect = "1.0.3"
   val antlr4 = "4.9.2"
+  val prox = "0.7.0"
+  val scopt = "4.0.1"
 }
 
 lazy val operatingSystem = settingKey[OS](
@@ -55,6 +57,8 @@ inThisBuild(
       "io.circe" %% "circe-testing" % v.circe,
       "io.circe" %% "circe-yaml" % v.circe,
       "org.antlr" % "antlr4-runtime" % v.antlr4,
+      "io.github.vigoo" %% "prox-fs2-3" % v.prox,
+      "com.github.scopt" %% "scopt" % v.scopt,
     ),
     libraryDependencies ++= Seq(
       "org.typelevel" %% "munit-cats-effect-3" % v.munitCatsEffect,

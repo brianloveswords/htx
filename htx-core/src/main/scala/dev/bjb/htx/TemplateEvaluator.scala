@@ -1,5 +1,8 @@
 package dev.bjb.htx
 
+import cats.Parallel
+import cats.effect.Async
+import cats.effect.Concurrent
 import cats.effect.IO
 import cats.implicits.*
 import dev.bjb.htx.grammar.TemplateBaseVisitor
@@ -11,9 +14,8 @@ import org.antlr.v4.runtime.tree.*
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration.*
 import scala.jdk.CollectionConverters.*
-import cats.effect.Async
-import cats.effect.Concurrent
-import cats.Parallel
+import scala.util.control.NoStackTrace
+import scala.util.control.NonFatal
 
 enum Part:
   case Text(inner: String)
@@ -68,8 +70,17 @@ case class TemplateEvaluator(parts: Seq[Part]):
     }
 
 object TemplateEvaluator:
-  def apply(input: String): TemplateEvaluator =
+  def apply(input: String): Either[TemplateParseError, TemplateEvaluator] = try
     val visitor = TemplateVisitor()
+    val parser = createParser(input)
+    val parts = visitor.visit(parser.template())
+    Right(TemplateEvaluator(parts))
+  catch { case err: TemplateParseError => Left(err) }
+
+  def unsafe(input: String): TemplateEvaluator =
+    apply(input).fold(err => throw err, identity)
+
+  def createParser(input: String): TemplateParser =
     val parser = TemplateParser(
       CommonTokenStream(
         TemplateLexer(
@@ -77,11 +88,33 @@ object TemplateEvaluator:
         ),
       ),
     )
-    val parts = visitor.visit(parser.template())
-    TemplateEvaluator(parts.toSeq)
+    parser.removeErrorListeners
+    parser.addErrorListener(TemplateErrorListener())
+    parser
+
+sealed trait TemplateParseError extends NoStackTrace
+case object MissingInput extends TemplateParseError:
+  override def getMessage: String = s"cannot parse empty input"
+case class ParseInputError(
+    line: Int,
+    charPositionInLine: Int,
+    msg: String,
+) extends TemplateParseError:
+  override def getMessage: String = s"$line:$charPositionInLine: $msg"
+
+private class TemplateErrorListener extends BaseErrorListener:
+  override def syntaxError(
+      recognizer: Recognizer[?, ?],
+      offendingSymbol: Any,
+      line: Int,
+      charPositionInLine: Int,
+      msg: String,
+      e: RecognitionException,
+  ): Unit =
+    throw new ParseInputError(line, charPositionInLine, msg)
 
 private class TemplateVisitor extends TemplateBaseVisitor[Seq[Part]]:
-  import dev.bjb.htx.grammar.TemplateParser.*
+  import grammar.TemplateParser.*
 
   val empty: Seq[Part] = Seq.empty
   def descend(ctx: ParserRuleContext): Seq[Part] =
@@ -93,6 +126,7 @@ private class TemplateVisitor extends TemplateBaseVisitor[Seq[Part]]:
     .replace("\\{", "{")
     .replace("\\}", "}")
     .replace("\\n", "\n")
+    .replace("\\t", "\t")
 
   override def visitTemplate(ctx: TemplateContext) =
     descend(ctx)
@@ -106,9 +140,6 @@ private class TemplateVisitor extends TemplateBaseVisitor[Seq[Part]]:
 
   override def visitText(ctx: TextContext) =
     Seq(Text(unescape(ctx.getText())))
-
-def pairs(s: String): Iterator[String] =
-  s.sliding(2) ++ List(s.last.toString)
 
 private def debugCtx(typ: String, ctx: ParserRuleContext): Unit =
   val t = ctx.getText

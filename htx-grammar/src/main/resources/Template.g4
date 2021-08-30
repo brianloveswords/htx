@@ -21,7 +21,7 @@ text:
 // lexer
 
 PATTERN:
-    '{' (PATTERN_END_ESC | STRING | .)+? '}'
+    '{' WS* (PATTERN_END_ESC | STRING | .)+? WS* '}'
 ;
 
 TEXT:
@@ -48,3 +48,6 @@ fragment STRING:
     | '\'' (STRING_ESC | .)*? '\''
 ;
 
+fragment WS:
+    [ \t\n\r]+ -> channel(HIDDEN)
+;

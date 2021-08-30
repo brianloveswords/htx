@@ -7,6 +7,10 @@
         "fields": [{ "name": "0bitmap$1" }]
     },
     {
+        "name": "cats.effect.std.Semaphore$impl",
+        "fields": [{ "name": "0bitmap$1" }]
+    },
+    {
         "name": "cats.effect.unsafe.IORuntimeCompanionPlatform",
         "fields": [{ "name": "0bitmap$1" }]
     },
@@ -53,11 +57,20 @@
         "fields": [{ "name": "0bitmap$1" }]
     },
     {
+        "name": "dev.bjb.htx.cli.CliConfig$package$",
+        "fields": [{ "name": "0bitmap$1" }]
+    },
+    {
         "name": "fs2.Chunk$",
         "fields": [{ "name": "0bitmap$1" }]
     },
     {
-        "name": "java.lang.Object[]"
+        "name": "fs2.internal.ScopedResource$$anon$1",
+        "fields": [{ "name": "0bitmap$1" }]
+    },
+    {
+        "name": "io.github.vigoo.prox.ProxFS2$$anon$2",
+        "fields": [{ "name": "0bitmap$1" }]
     },
     {
         "name": "java.lang.String"
@@ -261,15 +274,15 @@
         "fields": [{ "name": "0bitmap$2" }]
     },
     {
-        "name": "org.scalacheck.Gen$",
-        "fields": [{ "name": "0bitmap$2" }]
-    },
-    {
         "name": "org.typelevel.ci.package$CIStringSyntax",
         "fields": [{ "name": "0bitmap$1" }]
     },
     {
         "name": "scala.util.Either[]"
+    },
+    {
+        "name": "scopt.OParser$",
+        "fields": [{ "name": "0bitmap$1" }]
     },
     {
         "name": "sun.misc.Unsafe",

@@ -17,7 +17,7 @@ object Stdio:
 trait MockConsole extends Console[IO]:
   def getStdio: IO[Stdio]
 
-def mkConsole: IO[MockConsole] =
+def mkConsole(stdin: List[String]): IO[MockConsole] =
   for stdio <- Ref.of[IO, Stdio](Stdio.empty)
   yield new MockConsole {
     def error[A](a: A)(using Show[A]): IO[Unit] = stdio.update {
@@ -32,6 +32,7 @@ def mkConsole: IO[MockConsole] =
       IO.raiseError(IOException("readLineWithCharset not implemented"))
     def getStdio = stdio.get
   }
+def mkConsole: IO[MockConsole] = mkConsole(List.empty)
 
 class CliLiveTest extends CommonSuite:
   test("example: mdlink template") {
